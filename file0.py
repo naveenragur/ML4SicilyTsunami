@@ -1,1 +1,1 @@
-"Life is beautiful"
+#Life is beautiful in python
