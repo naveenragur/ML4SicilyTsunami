@@ -16,6 +16,9 @@ git push origin Day0 - push changes to remote repo into origin/Day0 branch
 **Useful links:**
 
 https://medium.com/@steveamaza/how-to-write-a-proper-git-commit-message-e028865e5791
+
 https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github
+
 https://education.github.com/git-cheat-sheet-education.pdf
+
 https://www.earthdatascience.org/workshops/intro-version-control-git/
