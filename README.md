@@ -1,6 +1,7 @@
 # IUSS_INGV_REPO
 
 Quick help:
+
 git status - to check if some files have been updated or created newly and need to be added to local repo
 
 git add . - add them all files or a specific file
