@@ -10,7 +10,7 @@ git commit -m "[message describing what you did]" to save a current state of rep
 
 git pull - if one of us has made any changes on the remote repo and we would like to pull these changes
 
-git push origin Day0 - push changes to remote repo into origin/Day0 branch
+git push -u origin main - push changes to remote repo into origin/main ie the remote main branch or any other feature branch
 ##
 
 **Useful links:**
