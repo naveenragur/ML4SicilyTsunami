@@ -1,24 +1,7 @@
 # IUSS_INGV_REPO README 
 
-**Quick help:**
+Git project to track the work related to the use of ML for tsunami onshore hazard prediction as a surrogate model which can be linked with a regional offshore tsunami model that can be used as the input by providing offshore wave amplitude as timeseries.
 
-git status - to check if some files have been updated or created newly and need to be added to local repo
+Simulation data for training the ML model provided by INGV for Eastern Scicily with inundation focused on Catania and Siracusa for 1212 events.
 
-git add . - add them all files or a specific file to git tracking
 
-git commit -m "[message describing what you did]" to save a current state of repo as a snapshot
-
-git pull - if one of us has made any changes on the remote repo and we would like to pull these changes
-
-git push -u origin main - push changes to remote repo into origin/main ie the remote main branch or any other feature branch
-##
-
-**Useful links:**
-
-https://medium.com/@steveamaza/how-to-write-a-proper-git-commit-message-e028865e5791
-
-https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github
-
-https://education.github.com/git-cheat-sheet-education.pdf
-
-https://www.earthdatascience.org/workshops/intro-version-control-git/
