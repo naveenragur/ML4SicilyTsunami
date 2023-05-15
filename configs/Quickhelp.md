@@ -1,4 +1,4 @@
-**Quick help:**
+**Manage git repo**
 
 git status - to check if some files have been updated or created newly and need to be added to local repo
 
@@ -9,9 +9,6 @@ git commit -m "[message describing what you did]" to save a current state of rep
 git pull - if one of us has made any changes on the remote repo and we would like to pull these changes
 
 git push -u origin main - push changes to remote repo into origin/main ie the remote main branch or any other feature branch
-##
-
-**Useful links:**
 
 https://medium.com/@steveamaza/how-to-write-a-proper-git-commit-message-e028865e5791
 
@@ -20,3 +17,12 @@ https://docs.github.com/en/migrations/importing-source-code/using-the-command-li
 https://education.github.com/git-cheat-sheet-education.pdf
 
 https://www.earthdatascience.org/workshops/intro-version-control-git/
+
+**Check pytorch and cuda version is working:**
+
+import torch
+torch.__version__
+torch.cuda.is_available()
+
+**Export env from conda**
+conda env export > tsuML.yml
