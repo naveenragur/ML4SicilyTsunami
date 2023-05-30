@@ -3,6 +3,8 @@ data/simu/PS_manning003
 data/processed/*.dat
 data/processed/*.npy
 *.tar
+
 model/SR/out
 model/CT/out
 
+scripts/HPC/log
