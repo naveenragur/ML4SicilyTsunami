@@ -6,20 +6,18 @@
 #SBATCH --time=0-01:00 # time limit (D-HH:MM)
 #SBATCH -p gpuq # partition
 #SBATCH --mem=16G # memory pool for all cores
-#SBATCH --output run-%j.txt       # Standard out goes to this file
-#SBATCH --error error-%j.txt        # Standard err goes to this file
+#SBATCH --output ./log/run-%j.txt       # Standard out goes to this file
+#SBATCH --error ./log/error-%j.txt        # Standard err goes to this file
 
 # for calculating the amount of time the job takes
 begin=`date +%s`
-echo $HOSTNAME
+echo node: $HOSTNAME
+echo start time: `date`
+echo ...........
 
 # setting up variables
-# nepochs2use
-# epochs2use
-# zdim2use
-# vae2use
-# scalebinary
-
+region=$1
+size=$2
 
 # loading modules or conda
 source /home/${USER}/.bash_profile # loading bash_proi
@@ -27,10 +25,11 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 
 # running commands
 cd $MLDir/scripts/HPC
-python 01_preprocess.py 
+python 01_preprocess.py $region $size
 
 
 # finished commands
+echo ...........
 end=`date +%s`
 elapsed=`expr $end - $begin`
-echo Time taken: $elapsed
+echo Time taken: $elapsed seconds
