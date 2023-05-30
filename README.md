@@ -1,37 +1,42 @@
-# README 
-Git project to track the work related to the use of ML for tsunami onshore hazard prediction as a surrogate model which can be linked with a regional offshore tsunami model that can be used as the input by providing offshore wave amplitude as timeseries.
+# Tsunami Onshore Hazard Prediction using Machine Learning
 
-Simulation data for training the ML model provided by INGV for Eastern Scicily with inundation focused on Catania and Siracusa for 1212 events,check below html maps for quick view of events and data:
-/resources/gis/html/event_example.html
-/resources/gis/html/SRmap_explore.html
+This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a timeseries input.
 
+## Simulation Data
 
-Workflow:
-0. Preprocessing and data analysis
-(a) offshore statistics for all events, all gauges
-(b) onshore statistics for all events, both sites
-(c) earthquake statistics for all events already available
+The ML model is trained using simulation data provided by INGV for Eastern Sicily, with a focus on Catania and Siracusa. The dataset consists of 1212 events, and you can view the event details and data through the following HTML maps:
 
-1. Selection of events for experiment based on selection criteria like stratified sampling parameters include
-(a) Magnitude, displacement, depth, location, source type, etc.
-(b) Offshore wave amplitude at selected points - max, time of max, etc.
-(c) Onshore inundation characteristics - max depth, area, etc.
+- [CT Event Prediction Example Map](/model/CT/plot/CTevent_example_93.html)
+- [SR Event Prediction Example Map](/model/CT/plot/SRevent_example_12.html)
+- [Events Map Explorer](/resources/gis/html/map_events.html)
 
-2. Split a given selection of events into training and testing sets
+## Workflow
 
-3. Train a ML model on the training set with guidance based on testset for hyperparameter tuning
-(a) Pretraining a offshore encoder(ideally I would do this with the whole dataset, not just training set)
-(b) Training a onshore decoder (with all the training set)
-(c) Fine tuning the decoder + interface + encoder (with the training set)
+The workflow for this project is as follows:
 
-4. Check the performance of the model on the unused dataset 
-(a) At control points
-(b) At all the inundation locations (single goodness of fit metric)- plot at eq location to visualise as a map
-(c) As events of specific magnitude or return period levels
-(d) As events of different  
+0. Preprocessing and Data Analysis
+   - Offshore statistics for all events and gauges
+   - Onshore statistics for all events at both sites
+   - Earthquake statistics for all events (already available)
 
- 
+1. Selection of Events for Experiment
+   - Events are selected based on specific criteria, such as stratified sampling parameters:
+     - Magnitude, displacement, depth, location, source type, etc.
+     - Offshore wave amplitude at selected points (maximum, time of maximum, etc.)
+     - Onshore inundation characteristics (maximum depth, area, etc.)
 
+2. Splitting the Event Selection
+   - The selected events are divided into training and testing sets.
 
+3. Training the ML Model
+   - The ML model is trained on the training set, with guidance based on the test set for hyperparameter tuning.
+   - Pretraining an offshore encoder (ideally using the whole dataset, not just the training set)
+   - Training an onshore decoder using the training set
+   - Fine-tuning the decoder, interface, and encoder using the training set
 
-
+4. Model Performance Evaluation
+   - The performance of the model is assessed using the unused dataset:
+     - Evaluation at control points
+     - Evaluation at all inundation locations (using a single goodness-of-fit metric)
+     - Evaluation for events of specific magnitude or return period levels
+     - Evaluation for events of different types
