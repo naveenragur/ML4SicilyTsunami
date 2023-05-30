@@ -1,6 +1,6 @@
 data/simu/PS_003
 data/simu/PS_manning003
-data/processed/
+data/processed/*
 *.tar
 model/SR/out
 model/CT/out
