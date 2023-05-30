@@ -51,3 +51,9 @@ gdown "fileid"
 
 #INGV
 
+**System Arguments in sbatch scripts**
+
+
+
+**Philosophy**
+run sample and then check before launching full dataset
