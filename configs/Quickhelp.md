@@ -10,6 +10,12 @@ git pull - if one of us has made any changes on the remote repo and we would lik
 
 git push -u origin main - push changes to remote repo into origin/main ie the remote main branch or any other feature branch
 
+git branch -a - list branches in repo
+
+git branch --delete namebranch
+
+git remote prune origin /  git remote prune origin --dry-run (check before getting rid of stale branches)
+
 https://medium.com/@steveamaza/how-to-write-a-proper-git-commit-message-e028865e5791
 
 https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github
@@ -26,3 +32,4 @@ torch.cuda.is_available()
 
 **Export env from conda**
 conda env export > tsuML.yml
+conda activate envfolder
