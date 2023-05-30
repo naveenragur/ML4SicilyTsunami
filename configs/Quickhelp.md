@@ -32,4 +32,22 @@ torch.cuda.is_available()
 
 **Export env from conda**
 conda env export > tsuML.yml
-conda activate envfolder
+conda activate /mnt/beegfs/nragu/tsunami/env
+
+in IUSS HPC my conda env: /mnt/beegfs/nragu/tsunami/env
+
+**Utils**
+conda install -c conda-forge gdown
+gdown "fileid"
+
+**Environmental Variables in /home/${USER}/.bash_profile**
+#IUSSHPC
+#export MLDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami"
+#export SimDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/PS_manning003"
+
+#CARISMA
+#export MLDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo"
+#export SimDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo/data/simu/PS_manning003"
+
+#INGV
+
