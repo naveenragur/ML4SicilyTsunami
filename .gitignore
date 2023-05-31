@@ -7,4 +7,4 @@ data/processed/*.npy
 model/SR/out
 model/CT/out
 
-scripts/HPC/log
+scripts/HPC/log/*.txt
