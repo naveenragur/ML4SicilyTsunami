@@ -6,7 +6,9 @@ This Git project tracks the work related to the use of machine learning (ML) for
 
 The ML model is trained using simulation data provided by INGV for Eastern Sicily, with a focus on Catania and Siracusa. The dataset consists of 1212 events, and you can view the event details and data through the following HTML maps:
 
-- [Events Map Explorer](/resources/gis/html/map_events.html) (Click the "Download Raw" button to download the file)
+(Click the "Download Raw" button at the link to download the file, its html files created with folium)
+
+- [Events Map Explorer](/resources/gis/html/map_events.html) 
 
 Some predictions:
 - [CT Event 93](/model/CT/plot/CTevent_example_93.html)
