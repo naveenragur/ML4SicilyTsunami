@@ -41,19 +41,20 @@ conda install -c conda-forge gdown
 gdown "fileid"
 
 **Environmental Variables in /home/${USER}/.bash_profile**
-#IUSSHPC
-#export MLDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami"
-#export SimDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/PS_manning003"
+IUSSHPC:
+os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
+export MLDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami"
+export SimDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/PS_manning003"
 
-#CARISMA
-#export MLDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo"
-#export SimDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo/data/simu/PS_manning003"
+CARISMA(was hardcoded in the code):
+export MLDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo"
+export SimDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo/data/simu/PS_manning003"
 
-#INGV
+INGV:
 
-**System Arguments in sbatch scripts**
-
-
+**System Arguments as variables in sbatch scripts**
+sbatch run.sbatch CT 1212
+sbatch run.sbatch SR 1212
 
 **Philosophy**
 run sample and then check before launching full dataset
