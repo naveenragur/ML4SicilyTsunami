@@ -1,4 +1,0 @@
-  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/HPC/01_preprocess.py", line 18
-    %matplotlib inline 
-    ^
-SyntaxError: invalid syntax
