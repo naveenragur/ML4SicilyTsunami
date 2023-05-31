@@ -28,6 +28,8 @@ except:
 #Read event list from file
 event_list = np.loadtxt(f'{MLDir}/data/events/sample_events{size}.txt', dtype='str')
 
+
+
 #filter events with lower than threshold of 0.1 at atleast one station
 offshore_threshold = 0.1
 onshore_threshold = 0.25
@@ -64,6 +66,6 @@ test_events = event_list[int(len(event_list)*0.65):]
 print(len(train_events), len(test_events))
 
 #save events in file
-np.savetxt(f'{MLDir}/data/events/shuffled_events_{reg}_{size}.txt', event_list, fmt='%s')
-np.savetxt(f'{MLDir}/data/events/train_events_{reg}_{size}.txt', train_events, fmt='%s')
-np.savetxt(f'{MLDir}/data/events/test_events_{reg}_{size}.txt', test_events, fmt='%s')
+np.savetxt(f'{MLDir}/data/events/shuffled_events_{reg}.txt', event_list, fmt='%s')
+np.savetxt(f'{MLDir}/data/events/train_events_{reg}.txt', train_events, fmt='%s')
+np.savetxt(f'{MLDir}/data/events/test_events_{reg}.txt', test_events, fmt='%s')

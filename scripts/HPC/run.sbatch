@@ -1,5 +1,10 @@
 #!/bin/bash
 
+logfolder = "/log"
+if [ ! -d "$folder" ]; then
+    mkdir -p $logfolder
+fi
+
 # options for sbatch
 #SBATCH --job-name=trainTsuML # Job name
 #SBATCH --nodes=1 # number of nodes
@@ -25,7 +30,16 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 
 # running commands
 cd $MLDir/scripts/HPC
-python 01_preprocess.py $region $size
+# logfolder = "/log"
+# if [ ! -d "$folder" ]; then
+#     mkdir -p $logfolder
+# fi
+
+echo "Running 01_splitevents.py"
+python 01_splitevents.py $region $size
+
+# echo "Running 02_preprocess.py"
+# python 02_preprocess.py $region $size
 
 
 # finished commands
