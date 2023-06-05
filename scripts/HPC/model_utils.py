@@ -530,10 +530,20 @@ def evaluateAE(data_in, #training data offshore
     #combine columns of true,pred,er into 12 column array
     true_pred_er = np.column_stack((true_list,pred_list,er_list))
 
+    #print overall performance metrics for whole training exercise and evaluation work : mseoverall, K, k, r2maxdepth
+    # Calculate mseoverall and r2maxdepth
+    mseoverall = mean_squared_error(data_out, predic)
+    r2maxdepth = r2_score(data_out, predic)
+    print(f"mseoverall: {mseoverall:.5f}")
+    print(f"r2maxdepth: {r2maxdepth:.5f}")
+    #TODO: add per event evaluation for discovery and analysis
 
     #plot error at each location
     print('plotting error at each control points')
     plt.figure(figsize=(15, 30))
+    #add to main plot the mse and r2 to the plot at the top
+    plt.title(f"mseoverall: {mseoverall:.5f},r2maxdepth: {r2maxdepth:.5f}")
+    #error charts
     for i in range(len(locindices)):
         plt.subplot(6,2,i+1)
         plt.hist(er_list[er_list[:,i]!=0,i],bins=5)
@@ -550,14 +560,11 @@ def evaluateAE(data_in, #training data offshore
         plt.title(f"Control Location:{i+1},No of flood events:{neve}/413")
         plt.text(0.78, 0.9, f" TP: {TP:.2f}, TN: {TN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
         plt.text(0.78, 0.75, f"FP: {FP:.2f}, FN: {FN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
-        plt.xlabel('Error')
+        plt.xlabel('Error')<
         plt.ylabel('Count')
     plt.savefig(f'{MLDir}/model/{reg}/plot/model_coupled_off{channels_off}_on{channels_on}_error.png')
 
-    #print overall performance metrics for whole training exercise and evaluation work : mseoverall, K, k, r2maxdepth
-    print(f"mseoverall: {mean_squared_error(data_out,predic):.5f}")
-    print(f"r2maxdepth: {r2_score(data_out,predic):.5f}")
-    #TODO: add per event evaluation for discovery and analysis
+
 
 def calc_scores(true,pred,locindices,threshold=0.1): #for each event
     #only test where there is significant flooding
