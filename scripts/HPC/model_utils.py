@@ -486,13 +486,13 @@ def evaluateAE(data_in, #training data offshore
     # Plot results max height for all events
     test_max = np.max(data_out,axis=(1))
     recon_max = np.max(predic,axis=(1))
-
+    r2maxdepth = r2_score(test_max, recon_max)
     #plot max depth for all events
     plt.figure(figsize=(5, 5))
     plt.scatter(test_max, recon_max, s=1)
     plt.plot([0, 1], [0, 1], transform=plt.gca().transAxes, color='red')
     plt.title(f"Max height for each events")
-    plt.text(10,5,f"R Squared: {r2_score(test_max, recon_max):.5f} ", fontsize=12)
+    plt.text(10,5,f"R Squared: {r2maxdepth:.5f} ", fontsize=12)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.xlim(0, 20)
     plt.ylim(0, 20)
@@ -533,16 +533,15 @@ def evaluateAE(data_in, #training data offshore
     #print overall performance metrics for whole training exercise and evaluation work : mseoverall, K, k, r2maxdepth
     # Calculate mseoverall and r2maxdepth
     mseoverall = mean_squared_error(data_out, predic)
-    r2maxdepth = r2_score(data_out, predic)
-    print(f"mseoverall: {mseoverall:.5f}")
-    print(f"r2maxdepth: {r2maxdepth:.5f}")
+    print(f"mseoverall: {mseoverall:.4f}")
+    print(f"r2maxdepth: {r2maxdepth:.4f}")
     #TODO: add per event evaluation for discovery and analysis
 
     #plot error at each location
     print('plotting error at each control points')
     plt.figure(figsize=(15, 30))
     #add to main plot the mse and r2 to the plot at the top
-    plt.title(f"mseoverall: {mseoverall:.5f},r2maxdepth: {r2maxdepth:.5f}")
+    plt.suptitle(f"mseoverall: {mseoverall:.4f},r2maxdepth: {r2maxdepth:.4f}",fontsize=25)
     #error charts
     for i in range(len(locindices)):
         plt.subplot(6,2,i+1)
