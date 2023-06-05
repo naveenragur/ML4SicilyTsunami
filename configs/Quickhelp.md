@@ -46,6 +46,9 @@ os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
 export MLDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami"
 export SimDir="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/PS_manning003"
 
+INGV:
+conda env create -p /mnt/beegfs/nragu/tsunami/env --file /mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/configs/HPC.yml
+
 CARISMA(was hardcoded in the code):
 export MLDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo"
 export SimDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo/data/simu/PS_manning003"
