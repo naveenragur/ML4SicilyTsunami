@@ -560,7 +560,7 @@ def evaluateAE(data_in, #training data offshore
         plt.title(f"Control Location:{i+1},No of flood events:{neve}/413")
         plt.text(0.78, 0.9, f" TP: {TP:.2f}, TN: {TN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
         plt.text(0.78, 0.75, f"FP: {FP:.2f}, FN: {FN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
-        plt.xlabel('Error')<
+        plt.xlabel('Error')
         plt.ylabel('Count')
     plt.savefig(f'{MLDir}/model/{reg}/plot/model_coupled_off{channels_off}_on{channels_on}_error.png')
 
