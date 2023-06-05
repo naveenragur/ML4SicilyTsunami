@@ -53,8 +53,12 @@ export SimDir="/mnt/data/nragu/Tsunami/INGV/IUSS_INGV_Repo/data/simu/PS_manning0
 INGV:
 
 **System Arguments as variables in sbatch scripts**
-sbatch run.sbatch CT 1212
+Preprocessing and training:
+sbatch run.sbatch CT 1212 
 sbatch run.sbatch SR 1212
+
+Final evaluation:
+sbatch run.sbatch SR 1000 test
 
 **Philosophy**
 run sample and then check before launching full dataset
