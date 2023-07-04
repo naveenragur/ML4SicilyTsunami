@@ -15,7 +15,7 @@ except:
 
 #set seed
 np.random.seed(0)
-
+split = 0.65 #train-test split ratio
 #TODO: could be read from a parameter file instead of hardcoding here
 #dimensions and gauge numbers
 if reg == 'SR':
@@ -47,8 +47,8 @@ red_d_array = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{size}.dat',
 
 #TODO:split as decided by ratio which is default here, can be sys arg or even event list files
 # input data
-data = red_d_array[:int(len(red_d_array)*0.65),:]
-test_data = red_d_array[int(len(red_d_array)*0.65):,:]
+data = red_d_array[:int(len(red_d_array)*split),:]
+test_data = red_d_array[int(len(red_d_array)*split):,:]
 
 #directory to save model and outputs
 if not os.path.exists(f'{MLDir}/model/{reg}/out/'):
