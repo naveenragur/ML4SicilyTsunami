@@ -10,12 +10,13 @@ try:
     SimDir = os.getenv('SimDir')
     reg = sys.argv[1] #CT or SR
     size = sys.argv[2] #eventset size
+    mode = sys.argv[3] #train or test
 except:
     raise Exception("*** Must first set environment variable")
 
 #set seed
 np.random.seed(0)
-
+split = 0.65
 #TODO: could be read from a parameter file instead of hardcoding here
 #dimensions and gauge numbers
 if reg == 'SR':
@@ -40,8 +41,8 @@ t_array = np.memmap(f'{MLDir}/data/processed/t_{reg}_{size}.dat',
                 shape=(n_eve, ts_dim, pts_dim))
 
 #TODO:split as decided by ratio which is default here, can be sys arg or even event list files
-data = t_array[:int(len(t_array)*0.65)]
-test_data = t_array[int(len(t_array)*0.65):]
+data = t_array[:int(len(t_array)*split)]
+test_data = t_array[int(len(t_array)*split):]
 
 #directory to save model and outputs
 if not os.path.exists(f'{MLDir}/model/{reg}/out/'):

@@ -60,8 +60,8 @@ Preprocessing and training(needs reg and train list size to choose file):
 sbatch run.sbatch CT 1212 
 sbatch run.sbatch SR 1212
 
-Final evaluation(needs reg and train list size to choose file, test mode and test size to choose file)::
-sbatch run.sbatch SR 1212 test 1000
+Final evaluation(needs reg and test list size to choose file, test mode and test size to choose mask file)::
+sbatch run.sbatch SR 5000 test 1000
 
 **Philosophy**
 run sample and then check before launching full dataset
