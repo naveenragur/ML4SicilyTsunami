@@ -103,7 +103,7 @@ for i, event in enumerate(event_list):
     D.close()
     # H.close()
     # Z.close()
-    # dZ.close()
+    dZ.close()
     TS.close()
 
 #arrange dimensions as prefered by pytorch
