@@ -1,3 +1,4 @@
+#Description: Preprocess the data offshore and onshore data for training and testing
 import os
 import sys
 
@@ -37,7 +38,7 @@ elif mode == 'test':
     #save event list
     np.savetxt(f'{MLDir}/data/events/shuffled_events_{mode}_{size}.txt', event_list, fmt='%s')
 
-#not size is the size of selection but not the number of events in the actual event list which can be less 
+#note size is the size of selection but not the number of events in the actual event list which can be less 
 #than the size of selection if there are events that dont satisfy threshold criterias
 
 #string template for file filepath

@@ -20,7 +20,7 @@ echo ...........
 source /home/${USER}/.bash_profile # loading bash_proi
 conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 
-python main.py #with reg=SR #configs/special_config.json
+python preprocess.py #with reg=SR #parameters.json
 
 # finished commands
 echo ...........

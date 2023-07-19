@@ -1,3 +1,4 @@
+#Description: Checks offshore and onshore nc files and create summary statistics
 import os
 import sys
 import numpy as np
