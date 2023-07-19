@@ -997,7 +997,7 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
                   MLDir = None,
                   ):
     
-    data = pd.read_csv(MLDir + f'/data/info/sampling_input_{reg}_{reg_gaugeno}.csv')
+    data = pd.read_csv(MLDir + f'data/info/sampling_input_{reg}_{reg_gaugeno}.csv')
 
     'split sampling in two steps for event type 0 and 1 then merge'
     sample_step0 = sample_train_events(data.groupby('event_type').get_group(0),
@@ -1049,9 +1049,10 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
     plt.savefig(MLDir + f'/model/{reg}/plot/samplemap_events{str(sample_len)}_{reg}_{reg_gaugeno}.png', bbox_inches='tight')
 
     #save list of ids to txt file
-    sample_test['id'].unique().to_csv(MLDir + f'/data/events/sample_events{str(sample_len)}_{reg}_{reg_gaugeno}.txt', header=False, index=None)
-
-    return sample_len
+    path = MLDir + f'/data/events/sample_events{str(sample_len)}_{reg}_{reg_gaugeno}.txt'
+    sample_test['id'].unique().to_csv(path, header=False, index=None)
+    
+    return sample_len, path
 
 @ex.capture
 def read_memmap(MLDir,

@@ -1,0 +1,1 @@
+folder where netcdf files are processed to nc or numpy binary dat files

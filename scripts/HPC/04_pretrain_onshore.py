@@ -15,7 +15,7 @@ except:
 
 #set seed
 np.random.seed(0)
-split = 0.65 #train-test split ratio
+split = 0.75 #train-test split ratio
 #TODO: could be read from a parameter file instead of hardcoding here
 #dimensions and gauge numbers
 if reg == 'SR':

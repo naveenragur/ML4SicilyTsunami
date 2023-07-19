@@ -1,3 +1,4 @@
+# Description: This script samples events, shuffles and splits the events into train and test sets
 import os
 import sys
 import numpy as np
@@ -17,7 +18,7 @@ np.random.seed(0)
 #filter events with lower than threshold of 0.1 at atleast one station
 offshore_threshold = 0.1
 onshore_threshold = 0.25
-split = 0.65
+split = 0.75
 
 #TODO: change to read the master file with stats of all 53k events, here it uses the 1212 events
 #TODO: selection of the number of gauge stations to use for inputs

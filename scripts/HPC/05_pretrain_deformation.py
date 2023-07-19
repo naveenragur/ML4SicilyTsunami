@@ -15,7 +15,7 @@ except:
 
 #set seed
 np.random.seed(0)
-split = 0.65
+split = 0.75
 #TODO: could be read from a parameter file instead of hardcoding here
 #dimensions and gauge numbers
 if reg == 'SR':

@@ -36,11 +36,11 @@ cd $MLDir/scripts/HPC
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
 
-# echo 'Running 01_splitevents.py'
-# python 01_splitevents.py $region $size $mode $masksize
+echo 'Running 01_splitevents.py'
+python 01_splitevents.py $region $size $mode $masksize
 
-# echo 'Running 02_preprocess.py'
-# python 02_preprocess.py $region $size $mode $masksize
+echo 'Running 02_preprocess.py'
+python 02_preprocess.py $region $size $mode $masksize
 
 # echo 'Running 03_pretrain_offshore.py'
 # python 03_pretrain_offshore.py $region $size $mode $masksize
@@ -51,8 +51,8 @@ cd $MLDir/scripts/HPC
 # echo 'Running 05_pretrain_deformation.py'
 # python 05_pretrain_deformation.py $region $size $mode $masksize
 
-echo 'Running 06_finetune_autoencoder.py'
-python 06_finetune_autoencoder.py $region $size $mode $masksize
+# echo 'Running 06_finetune_autoencoder.py'
+# python 06_finetune_autoencoder.py $region $size $mode $masksize
 
 # echo 'Running 02_preprocess.py used to preprocess test events for evaluation'
 # python 02_preprocess.py $region $size $mode $masksize 
