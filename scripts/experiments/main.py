@@ -1,11 +1,10 @@
 # main.py
 #This is where the experiment is run
-import os
 import numpy as np
 import experiment as exp
 
 @exp.ex.automain
-def run_experiment(MLDir,reg,train_size,test_size,batch_size,batch_size_on,ts_dim,pts_dim,z,channels_off,channels_on):
+def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_size_on,ts_dim,pts_dim,z,channels_off,channels_on):
     
     exp.set_seed_settings()
 
@@ -14,7 +13,7 @@ def run_experiment(MLDir,reg,train_size,test_size,batch_size,batch_size_on,ts_di
     event_list = np.loadtxt(event_list_path, dtype='str')
     n_eve = len(event_list)    
     
-    flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{train_size}.npy')
+    flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     nflood_grids = np.count_nonzero(flood_mask)
     
     # log as info in sacred experiment, also used by read_memmap
