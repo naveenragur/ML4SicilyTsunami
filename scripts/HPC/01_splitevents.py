@@ -1,4 +1,5 @@
 # Description: This script samples events, shuffles and splits the events into train and test sets
+#run: python 01_splitevents.py CT 1212
 import os
 import sys
 import numpy as np
@@ -20,8 +21,6 @@ offshore_threshold = 0.1
 onshore_threshold = 0.25
 split = 0.75
 
-#TODO: change to read the master file with stats of all 53k events, here it uses the 1212 events
-#TODO: selection of the number of gauge stations to use for inputs
 #offshore
 allpts_max = np.loadtxt(f'{MLDir}/data/info/grid0_allpts87_alleve53550.offshore.txt', dtype='str',skiprows=1)
 
@@ -32,14 +31,13 @@ elif reg == 'SR':
     GaugeNo = list(range(53,58)) #for Siracusa
     MainGauge = str(54) #for Siracusa
 
-#TODO: Add results from sampling module say importance sampling
-#Read event list from file
-utils.sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importance', 'uniform_wt', 'gridcount'
-                  samples_per_bin = 15,
-                  bin_splits = 12)
 
-event_list = np.loadtxt(f'{MLDir}/data/events/sample_events{size}_{reg}_{MainGauge}.txt', dtype='str')
-# event_list = np.loadtxt(f'{MLDir}/data/events/sample_events{size}.txt', dtype='str')
+#Read event list from file or sample first
+len, event_list = utils.sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importance', 'uniform_wt', 'gridcount'
+                                        samples_per_bin = 20,
+                                        bin_splits = 25)
+
+# event_list = np.loadtxt(f'{MLDir}/data/events/sample_events{size}_{reg}_{MainGauge}.txt', dtype='str') #for harcode
 
 #select only the events as in the event_list
 allpts_max = allpts_max[np.isin(allpts_max[:,0], event_list)]

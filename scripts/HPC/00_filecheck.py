@@ -1,4 +1,5 @@
 #Description: Checks offshore and onshore nc files and create summary statistics
+#run: python 00_filecheck.py $region $size $mode $masksize #only reg used in this script
 import os
 import sys
 import numpy as np
@@ -10,7 +11,6 @@ try:
     MLDir = os.getenv('MLDir')
     SimDir = os.getenv('SimDir')
     reg = sys.argv[1] #CT or SR
-    size = sys.argv[2] #eventset size
 except:
     raise Exception("*** Must first set environment variable")
 
@@ -34,7 +34,7 @@ all_eve_df = pd.DataFrame(columns = features_name)
 offshore_maxh = pd.DataFrame()
 
 #Read event list from file
-event_list = np.loadtxt(f'{MLDir}/data/events/sample_events{size}.txt', dtype='str')
+event_list = np.loadtxt(f'{MLDir}/data/events/sample_events53550.txt', dtype='str')
 
 #loop over events to calculate max offshore time series at 87 points
 #and max flow depth at CT and SR regions
@@ -77,7 +77,7 @@ for i, event in enumerate(event_list):
     all_eve_df = pd.concat([all_eve_df,df])
          
 #write summary statistics to file - onshore
-all_eve_df.to_csv(OnshorePath.format(reg,size),index=False,sep='\t')
+all_eve_df.to_csv(OnshorePath.format(reg,str(all_eve_df.shape[0])),index=False,sep='\t')
 
 #write summary statistics to file - offshore
 offshore_maxh = offshore_maxh.T
