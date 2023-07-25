@@ -738,11 +738,10 @@ def sample_train_events(data, #input dataframe with event info
     
     sample = []
     for bin in list(zip(bin_start, bin_end)):
+       
         #get events in this bin
         events_in_bin = data[(data['max_off'] >= bin[0]) & (data['max_off'] < bin[1])]
-   
-        if len(events_in_bin) <= samples_per_bin:
-            print('Less scenario to sample in this bin',bin,' -- need to be careful using samples')
+        print('Sampling',samples_per_bin, 'events in bin',bin,'from',len(events_in_bin),'events')
         
         rate_with_this_bin = np.sum(events_in_bin['mean_prob'] )    
         events_in_bin_copy = events_in_bin.copy()
@@ -753,29 +752,27 @@ def sample_train_events(data, #input dataframe with event info
         if importance_column == 'gridcount' or importance_column == 'LocationCount':
             # Print count of events per grid and print grid ID with the minimum count
             grid_counts = events_in_bin_copy.groupby('grid_id').count()['id']
-
             # Add the weights column
             events_in_bin_copy['norm_wt'] = events_in_bin_copy['grid_id'].map(lambda x: 1 / grid_counts[x])
-            events_in_bin_copy['norm_wt'] /= np.sum(events_in_bin_copy['norm_wt'])
-
-            if samples_per_bin > 0 and np.sum(events_in_bin_copy['norm_wt']) > 0:
-                #inverse wted sampling grid count
-                sampled_ids = np.random.choice(events_in_bin['id'],
-                                                size=samples_per_bin,
-                                                p=events_in_bin_copy['norm_wt'],
-                                                replace=False,
-                                                )
-       
+            events_in_bin_copy['norm_wt'] /= np.sum(events_in_bin_copy['norm_wt'])      
         else:
-            events_in_bin_copy.loc[:, 'norm_wt'] = events_in_bin[importance_column] / np.sum(events_in_bin[importance_column])           
-            if samples_per_bin > 0 and np.sum(events_in_bin_copy['norm_wt']) > 0:
-                #sample events from this bin weighted by importance
+            events_in_bin_copy.loc[:, 'norm_wt'] = events_in_bin[importance_column] / np.sum(events_in_bin[importance_column])  
+
+        if samples_per_bin > 0 and np.sum(events_in_bin_copy['norm_wt']) > 0:
+            #sample events from this bin weighted by norm_wt
+            if len(events_in_bin) <= samples_per_bin:
+                print('Less scenario to sample in this bin',bin,' -- need to be careful using samples will use sample with replacement')
+                sampled_ids = np.random.choice(events_in_bin['id'],
+                                                size=samples_per_bin,
+                                                p=events_in_bin_copy['norm_wt'],
+                                                replace=True,
+                                                )
+            else:
                 sampled_ids = np.random.choice(events_in_bin['id'],
                                                 size=samples_per_bin,
                                                 p=events_in_bin_copy['norm_wt'],
                                                 replace=False,
-                                                )
-                       
+                                                )            
         #get the sampled events
         sample.append(pd.DataFrame({
             'id': sampled_ids,
@@ -800,7 +797,7 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
     sample_step0 = sample_train_events(data.groupby('event_type').get_group(0),
                                     importance_column=wt_para,
                                     samples_per_bin=samples_per_bin,
-                                    bin_def = np.append(np.linspace(0,3,bin_splits), 99))
+                                    bin_def = np.append(np.linspace(0,3.5,bin_splits), 99))
 
     sample_step1 = sample_train_events(data.groupby('event_type').get_group(1),
                                     importance_column=wt_para, 
@@ -809,8 +806,9 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
 
     sample_test = pd.concat([pd.concat(sample_step0, axis=0), pd.concat(sample_step1, axis=0)], axis=0)
 
-    #check unique events in sample
-    print(len(sample_test['id'].unique()),'out of ',len(sample_test))
+        #check unique events in sample
+    sample_len = len(sample_test['id'].unique())
+    print(sample_len,'out of ',len(sample_test))
 
     #merge columns from combined to sample_test based on id
     sample_test = pd.merge(sample_test, data, on='id', how='left')
@@ -831,7 +829,7 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
     axs[2].hist(sample_test['max'], bins=bin_splits, alpha=0.5, label='max inun')
     axs[2].text(0.5, 0.5, 'count of events: '+str(len(sample_test)))
     axs[2].legend(loc='upper right')
-    plt.savefig(MLDir + f'/model/{reg}/plot/sampledist_events900_{reg}_{gaugeno}.png', bbox_inches='tight')
+    plt.savefig(MLDir + f'/model/{reg}/plot/sampledist_events{str(sample_len)}_{reg}_{gaugeno}.png', bbox_inches='tight')
 
     fig, ax = plt.subplots(figsize=(15,10))
     ax.title.set_text('Sampled events by: ' + wt_para)
@@ -842,7 +840,10 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
     plt.ylim(30, 43)
     ax = plt.gca()
     cx.add_basemap(ax,crs='EPSG:4326', source=cx.providers.Stamen.TonerLite)
-    plt.savefig(MLDir + f'/model/{reg}/plot/samplemap_events900_{reg}_{gaugeno}.png', bbox_inches='tight')
+    plt.savefig(MLDir + f'/model/{reg}/plot/samplemap_events{str(sample_len)}_{reg}_{gaugeno}.png', bbox_inches='tight')
 
     #save list of ids to txt file
-    sample_test['id'].to_csv(MLDir + f'/data/events/sample_events900_{reg}_{gaugeno}.txt', header=False, index=None)
+    path = MLDir + f'/data/events/sample_events{str(sample_len)}_{reg}_{gaugeno}.txt'
+    sample_test['id'].unique().to_csv(path, header=False, index=None)
+    
+    return sample_len, path

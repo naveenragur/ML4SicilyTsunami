@@ -36,8 +36,8 @@ cd $MLDir/scripts/HPC
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
 
-echo 'Running 01_splitevents.py'
-python 01_splitevents.py $region $size $mode $masksize
+# echo 'Running 01_splitevents.py'
+# python 01_splitevents.py $region $size $mode $masksize
 
 echo 'Running 02_preprocess.py'
 python 02_preprocess.py $region $size $mode $masksize
