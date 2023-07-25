@@ -17,7 +17,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 
 os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
-import matplotlib
 import matplotlib.pyplot as plt
 import contextily as cx
 
@@ -55,7 +54,8 @@ def config():
     # Define the region and data size parameters
     reg = "CT" #CT or SR
     train_size = "900" #eventset size for training & building the model
-    test_size = "5000" #eventset size for testing 
+    mask_size = "11100" #eventset size for masking
+    test_size = "11100" #eventset size for testing 
 
     # Define the model region related size/architecture
     if reg == 'SR':
