@@ -26,20 +26,24 @@ def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_siz
     AE = exp.BuildTsunamiAE()
 
     # load training data
-    t_array, red_d_array, red_dZ_array = exp.read_memmap(what4 = 'train', n_eve=n_eve, nflood_grids=nflood_grids)
+    t_array, red_d_array, red_dZ_array = exp.read_memmap(what4 = 'train',
+                                                         n_eve=n_eve,
+                                                         nflood_grids=nflood_grids,
+                                                         normalize=True,
+                                                         standardize=False,)
    
-    AE.pretrain(job = 'offshore',
-               data = t_array,
-               n = ts_dim,
-               t = pts_dim,
-               z = z,
-               channels = channels_off)
+    # AE.pretrain(job = 'offshore',
+    #            data = t_array,
+    #            n = ts_dim,
+    #            t = pts_dim,
+    #            z = z,
+    #            channels = channels_off)
     
-    # AE.pretrain(job = 'onshore',
-    #            data = red_d_array,
-    #            n = nflood_grids,
-    #            channels = channels_on,
-    #            batch_size = batch_size_on)
+    AE.pretrain(job = 'onshore',
+               data = red_d_array,
+               n = nflood_grids,
+               channels = channels_on,
+               batch_size = batch_size_on)
     
     # AE.pretrain(job = 'deform',
     #            data = red_dZ_array,

@@ -33,14 +33,16 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 # running commands
 cd $MLDir/scripts/HPC
 
+python checkgpu.py
+
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
 
 # echo 'Running 01_splitevents.py'
 # python 01_splitevents.py $region $size $mode $masksize
 
-echo 'Running 02_preprocess.py'
-python 02_preprocess.py $region $size $mode $masksize
+# echo 'Running 02_preprocess.py'
+# python 02_preprocess.py $region $size $mode $masksize
 
 # echo 'Running 03_pretrain_offshore.py'
 # python 03_pretrain_offshore.py $region $size $mode $masksize
