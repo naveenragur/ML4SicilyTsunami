@@ -26,6 +26,9 @@ from sacred.observers import FileStorageObserver
 import neptune
 from neptune.integrations.sacred import NeptuneObserver
 
+import pynvml as pynvml
+import psutil
+
 # Set up Sacred experiment
 ex = Experiment("autoencoder_experiment")
 ex.observers.append(FileStorageObserver.create("sacred_logs"))
@@ -46,14 +49,14 @@ def config():
     MLDir = "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/"
     SimDir = "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/"
 
-    #threshold for preprocess section
-    offshore_threshold = 0.1
-    onshore_threshold = 0.25
+    # #threshold for preprocess section in preprocess
+    # offshore_threshold = 0.1
+    # onshore_threshold = 0.25
 
     
     # Define the region and data size parameters
     reg = "CT" #CT or SR
-    train_size = "900" #eventset size for training & building the model
+    train_size = "500" #eventset size for training & building the model
     mask_size = "11100" #eventset size for masking
     test_size = "11100" #eventset size for testing 
 
@@ -90,8 +93,8 @@ def config():
     pts_dim = 480 #time series length
 
     # Define hyperparameters and training configurations
-    lr = 0.0001
-    lr_on = 0.00005
+    lr = 0.001
+    lr_on = 0.0025
     lr_deform = 0.00005
     lr_couple = 0.0005
 
@@ -138,6 +141,7 @@ def set_seed_settings(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.set_float32_matmul_precision('medium')
+
 
 #build the offshore model
 class Autoencoder_offshore(nn.Module):
@@ -335,7 +339,7 @@ class BuildTsunamiAE():
                 test_size =None, #test size
                 criteria = nn.MSELoss(), #loss function
                 step_size = 100, #step size for scheduler
-                gamma = 0.1, #gamma for scheduler
+                gamma = 0.1, #gamma for schedule""r
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
                 verbose = False,
                 es_gap = 1000
@@ -360,7 +364,7 @@ class BuildTsunamiAE():
             self.scheduler = StepLR(self.optimizer, self.step_size, self.gamma)
 
     def dataloader(self,dataset):
-        tensor_dataset = TensorDataset(torch.Tensor(dataset))
+        tensor_dataset = TensorDataset(torch.Tensor(dataset),)
         return DataLoader(tensor_dataset, batch_size=self.batch_size, shuffle = False)
 
     def get_dataloader(self, any_data):
@@ -446,7 +450,7 @@ class BuildTsunamiAE():
             train_loss, val_loss, test_loss = 0, 0, 0
             for batch_idx, (batch_data,) in enumerate(train_loader):
                 self.optimizer.zero_grad()
-                batch_data = batch_data.to('cuda')
+                batch_data = batch_data.to(self.device)
                 recon_data = self.model(batch_data)
                 loss = self.criterion(recon_data, batch_data)
                 train_loss += loss.item()
@@ -455,13 +459,13 @@ class BuildTsunamiAE():
                 self.scheduler.step()
                     
             for batch_idx, (batch_data,) in enumerate(val_loader):
-                batch_data = batch_data.to('cuda')
+                batch_data = batch_data.to(self.device)
                 recon_data = self.model(batch_data)
                 vloss = self.criterion(recon_data, batch_data)
                 val_loss += vloss.item()
             
             for batch_idx, (batch_data,) in enumerate(test_loader):
-                batch_data = batch_data.to('cuda')
+                batch_data = batch_data.to(self.device)
                 recon_data = self.model(batch_data)
                 tloss = self.criterion(recon_data, batch_data)
                 test_loss += tloss.item()
@@ -474,8 +478,8 @@ class BuildTsunamiAE():
             log2neptune = True
             if log2neptune:
                 run[f'train/{self.job}/epochloss'].append(avg_train_ls)
-                run[f'val/{self.job}//epochloss'].append(avg_val_ls)
-                run[f'test/{self.job}//epochloss'].append(avg_test_ls)
+                run[f'val/{self.job}/epochloss'].append(avg_val_ls)
+                run[f'test/{self.job}/epochloss'].append(avg_test_ls)
 
             if self.verbose:
                 print(f'epoch:{epoch},training loss:{avg_train_ls:.5f},val loss:{avg_val_ls:.5f},test loss:{avg_test_ls:.5f}', end='\r')
@@ -485,8 +489,8 @@ class BuildTsunamiAE():
             self.test_epoch_losses.append(avg_test_ls)
             
             #save model a sepcific intermediate epoch
-            if epoch % 100 == 0 :#and epoch >= 800:
-                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_epoch_{epoch}_{self.train_size}.pt')
+            # if epoch % 100 == 0 :#and epoch >= 800:
+            #     torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_epoch_{epoch}_{self.train_size}.pt')
             
             #overwrite epochs where val + test loss are the minimum and mark in plot below:
             if epoch == 0:
@@ -506,11 +510,11 @@ class BuildTsunamiAE():
             if epoch - min_epoch > self.es_gap:
                 print('early stopping at epoch:',epoch)
                 torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_estop_{epoch}_{self.train_size}.pt')
-                ex.log_scalar(f'es_epoch_{self.job}/', min_epoch)
+                ex.log_scalar(f'es_epoch_{self.job}/', epoch)
                 break
         
         self.min_epoch = min_epoch
-        print('min loss at epoch:',self.min_epoch)
+        print('min loss at epoch:',self.min_epoch, 'min loss:',min_loss)
         #save model as artifact
         ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_minepoch_{self.train_size}.pt')
 
@@ -587,9 +591,9 @@ class BuildTsunamiAE():
             train_loss, val_loss, test_loss = 0, 0, 0
             for batch_data_in,batch_data_deform,batch_data_out in zip(train_loader_in,train_loader_deform,train_loader_out):
                 self.optimizer.zero_grad()
-                batch_data_in = batch_data_in[0].to('cuda')
-                batch_data_deform = batch_data_deform[0].to('cuda')
-                batch_data_out = batch_data_out[0].to('cuda')
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deform = batch_data_deform[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
                 recon_data = self.model(batch_data_in,batch_data_deform)
                 loss = self.criterion(recon_data, batch_data_out)
                 train_loss += loss.item()
@@ -598,17 +602,17 @@ class BuildTsunamiAE():
                 self.scheduler.step()
                     
             for batch_data_in,batch_data_deform,batch_data_out in zip(val_loader_in,val_loader_deform,val_loader_out):
-                batch_data_in = batch_data_in[0].to('cuda')
-                batch_data_deform = batch_data_deform[0].to('cuda')
-                batch_data_out = batch_data_out[0].to('cuda')
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deform = batch_data_deform[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
                 recon_data = self.model(batch_data_in,batch_data_deform)
                 vloss = self.criterion(recon_data, batch_data_out)
                 val_loss += vloss.item()
 
             for batch_data_in,batch_data_deform,batch_data_out in zip(test_loader_in,test_loader_deform,test_loader_out):
-                batch_data_in = batch_data_in[0].to('cuda')
-                batch_data_deform = batch_data_deform[0].to('cuda')
-                batch_data_out = batch_data_out[0].to('cuda')
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deform = batch_data_deform[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
                 recon_data = self.model(batch_data_in,batch_data_deform)
                 tloss = self.criterion(recon_data, batch_data_out)
                 test_loss += tloss.item()
@@ -632,8 +636,8 @@ class BuildTsunamiAE():
             self.test_epoch_losses.append(avg_test_ls)
             
             #save model a sepcific intermediate epoch
-            if epoch % 100 == 0 :#and epoch >= 800:
-                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt')
+            # if epoch % 100 == 0 :#and epoch >= 800:
+            #     torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt')
         
             #overwrite epochs where val + test loss are the minimum and mark in plot below:
             if epoch == 0:
@@ -680,12 +684,14 @@ class BuildTsunamiAE():
                     batch_size_on = 100, #depends on GPU memory
                     control_points = [], #control points for evaluation
                     threshold = 0.1, #threshold for evaluation
+                    device = torch.device("cpu"),
                     ):
         
         self.job = 'evaluate'
         self.batch_size = batch_size_on
         self.channels_off = channels_off
         self.channels_on = channels_on
+        self.device = device
              
         #read model from file for testing
         if epoch is None:
@@ -707,9 +713,9 @@ class BuildTsunamiAE():
         with torch.no_grad():
             test_loss = 0
             for batch_idx,(batch_data_in,batch_data_deform,batch_data_out) in enumerate(zip(test_loader_in,test_loader_deform,test_loader_out)):
-                batch_data_in = batch_data_in[0].to('cuda')
-                batch_data_deform = batch_data_deform[0].to('cuda')
-                batch_data_out = batch_data_out[0].to('cuda')
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deform = batch_data_deform[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
                 recon_data = model(batch_data_in,batch_data_deform)
                 loss = self.criterion(recon_data, batch_data_out)
                 test_loss += loss.item()
@@ -1063,7 +1069,9 @@ def read_memmap(MLDir,
                 pts_dim,
                 n_eve,
                 nflood_grids,
-                what4 = 'train'):
+                what4 = 'train',
+                normalize = False,
+                standardize = False):
     
     if what4 == 'train':
         size = str(train_size)
@@ -1086,4 +1094,19 @@ def read_memmap(MLDir,
                                 dtype=float,
                                 shape=(n_eve, nflood_grids))
     
+    tmin,tmax = -5,5
+    dmin,dmax = 0,22
+    dZmin,dZmax = -5,5
+
+    if normalize:
+        t_array = (t_array - tmin) / (tmax - tmin)
+        red_d_array = (red_d_array - dmin) / (dmax - dmin)
+        red_dZ_array = (red_dZ_array - dZmin) / (dZmax - dZmin)
+
+    if standardize:
+        t_array = (t_array - np.mean(t_array)) / np.std(t_array)
+        red_d_array = (red_d_array - np.mean(red_d_array)) / np.std(red_d_array)
+        red_dZ_array = (red_dZ_array - np.mean(red_dZ_array)) / np.std(red_dZ_array)
+
     return t_array, red_d_array, red_dZ_array
+
