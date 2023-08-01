@@ -34,9 +34,10 @@ ex = Experiment("autoencoder_experiment")
 ex.observers.append(FileStorageObserver.create("sacred_logs"))
 
 # Set up the neptune instance and logger
-run = neptune.init_run(project="naveenragur/ML4Tsunami",
-                       source_files=["experiment.py","main.py","special_config.json"],
-                       api_token=os.getenv('Neptune_api_token'))
+run = neptune.init_run(project="naveenragur/ML4Sicily",
+                       source_files=["experiment.py","main.py","parameters.json","run.sbatch.txt"],
+                       api_token=os.getenv('Neptune_api_token'),
+                       )
 
 ex.observers.append(NeptuneObserver(run=run))
 
@@ -56,9 +57,9 @@ def config():
     
     # Define the region and data size parameters
     reg = "CT" #CT or SR
-    train_size = "500" #eventset size for training & building the model
-    mask_size = "11100" #eventset size for masking
-    test_size = "11100" #eventset size for testing 
+    train_size = "300" #eventset size for training & building the model
+    mask_size = "2400" #eventset size for masking
+    test_size = "0" #eventset size for testing 
 
     # Define the model region related size/architecture
     if reg == 'SR':
@@ -95,7 +96,7 @@ def config():
     # Define hyperparameters and training configurations
     lr = 0.001
     lr_on = 0.0025
-    lr_deform = 0.00005
+    lr_deform = 0.0025
     lr_couple = 0.0005
 
     es_gap = 1000
@@ -119,7 +120,7 @@ def config():
     epoch_onshore = None
 
     # Define the number of layers to be tuned
-    interface_layers = 2 #no of layers in the interface between encoder and decoder
+    interface_layers = 1 #no of layers in the interface between encoder and decoder
     tune_nlayers = 1 #last n layer of encoder and first layer of decoder are also tunable
 
     #for evaluation
@@ -270,13 +271,13 @@ class Autoencoder_coupled(nn.Module):
                 onshore_model,
                 deform_model,
                 interface_layers,
-                tune_layer):
+                tune_nlayers):
         super(Autoencoder_coupled, self).__init__()
 
         # Pretrained offshore 
         self.offshore_encoder = offshore_model.encoder
         for i, layer in enumerate(self.offshore_encoder):
-            if i < len(self.offshore_encoder) - tune_layer: #all layers except last
+            if i < len(self.offshore_encoder) - tune_nlayers: #all layers except last n layers
                 for param in layer.parameters():
                     param.requires_grad = False
             else:
@@ -286,7 +287,7 @@ class Autoencoder_coupled(nn.Module):
         # Pretrained deform 
         self.deform_encoder = deform_model.encoder
         for i, layer in enumerate(self.deform_encoder):
-            if i < len(self.deform_encoder) - tune_layer: #all layers except last
+            if i < len(self.deform_encoder) - tune_nlayers: #all layers except last n layers
                 for param in layer.parameters():
                     param.requires_grad = False
             else:
@@ -294,14 +295,15 @@ class Autoencoder_coupled(nn.Module):
                     param.requires_grad = True
 
         # Interface
-        if interface_layers == 1:
+        self.interface_layers = interface_layers
+        if self.interface_layers == 1:
             self.connect = nn.Sequential(
                                 nn.Linear(
                                     in_features=64, out_features=64
                                 ),
                                 nn.ReLU(),
             ) 
-        elif interface_layers == 2:    
+        elif self.interface_layers == 2:    
             self.connect = nn.Sequential(
                                     nn.Linear(
                                         in_features=64, out_features=64
@@ -312,10 +314,17 @@ class Autoencoder_coupled(nn.Module):
                                     ),
                                     nn.LeakyReLU(inplace=True),
             )
+        elif self.interface_layers == 0:
+            self.connect = nn.Sequential(
+                                nn.Linear(
+                                    in_features=64, out_features=64
+                                ),
+                                nn.ReLU(),
+            )
         # Pretrained onshore model
         self.onshore_decoder = onshore_model.decoder 
         for i, layer in enumerate(self.onshore_decoder):
-            if i < tune_layer:
+            if i < tune_nlayers:
                 for param in layer.parameters(): #first layer
                     param.requires_grad = True
             else:
@@ -326,7 +335,8 @@ class Autoencoder_coupled(nn.Module):
         x = self.offshore_encoder(x)
         # dz = self.deform_encoder(dz)
         # x = torch.cat((x, dz), dim=1)
-        x = self.connect(x)
+        if self.interface_layers > 0:
+            x = self.connect(x)
         x = self.onshore_decoder(x)
         return x
 
@@ -342,7 +352,7 @@ class BuildTsunamiAE():
                 gamma = 0.1, #gamma for schedule""r
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
                 verbose = False,
-                es_gap = 1000
+                es_gap = 1000 
                 ):
         self.model = None
         self.optimizer = None
@@ -364,7 +374,7 @@ class BuildTsunamiAE():
             self.scheduler = StepLR(self.optimizer, self.step_size, self.gamma)
 
     def dataloader(self,dataset):
-        tensor_dataset = TensorDataset(torch.Tensor(dataset),)
+        tensor_dataset = TensorDataset(torch.Tensor(dataset))
         return DataLoader(tensor_dataset, batch_size=self.batch_size, shuffle = False)
 
     def get_dataloader(self, any_data):
@@ -383,7 +393,7 @@ class BuildTsunamiAE():
             plt.plot(self.val_epoch_losses, color='red')
             plt.plot(self.test_epoch_losses, color='green')
             plt.axvline(x=self.min_epoch, color='black', linestyle='--')
-            plt.text(self.min_epoch, 0.1, self.min_epoch, fontsize=12)
+            plt.text(self.min_epoch, .001, self.min_epoch, fontsize=12)
             plt.legend(['train', 'val', 'test'], loc='upper left')
             plt.title(f"Training loss for Nofold")
             plt.xlabel("Epoch")
@@ -391,8 +401,11 @@ class BuildTsunamiAE():
             plt.yscale('log')
             if self.job == 'couple':
                 plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
+                ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
+
             else:
                 plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_ch_{self.channels}_{self.train_size}.png')   
+                ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_ch_{self.channels}_{self.train_size}.png')
             plt.clf()
 
     @ex.capture
@@ -568,7 +581,7 @@ class BuildTsunamiAE():
             self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deform_ch_{self.channels_on}_epoch_{self.couple_epochs[1]}_{self.train_size}.pt")
             self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshore_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt")
 
-            
+        print(self.interface_layers)    
         # Initialize model
         self.model = Autoencoder_coupled(self.offshore_model,
                                          self.onshore_model, 
@@ -589,7 +602,7 @@ class BuildTsunamiAE():
         for epoch in range(self.nepochs):
 
             train_loss, val_loss, test_loss = 0, 0, 0
-            for batch_data_in,batch_data_deform,batch_data_out in zip(train_loader_in,train_loader_deform,train_loader_out):
+            for batch_idx,(batch_data_in,batch_data_deform,batch_data_out) in enumerate(zip(train_loader_in,train_loader_deform,train_loader_out)):
                 self.optimizer.zero_grad()
                 batch_data_in = batch_data_in[0].to(self.device)
                 batch_data_deform = batch_data_deform[0].to(self.device)
@@ -601,7 +614,7 @@ class BuildTsunamiAE():
                 self.optimizer.step()
                 self.scheduler.step()
                     
-            for batch_data_in,batch_data_deform,batch_data_out in zip(val_loader_in,val_loader_deform,val_loader_out):
+            for batch_idx,(batch_data_in,batch_data_deform,batch_data_out) in enumerate(zip(val_loader_in,val_loader_deform,val_loader_out)):
                 batch_data_in = batch_data_in[0].to(self.device)
                 batch_data_deform = batch_data_deform[0].to(self.device)
                 batch_data_out = batch_data_out[0].to(self.device)
@@ -609,7 +622,7 @@ class BuildTsunamiAE():
                 vloss = self.criterion(recon_data, batch_data_out)
                 val_loss += vloss.item()
 
-            for batch_data_in,batch_data_deform,batch_data_out in zip(test_loader_in,test_loader_deform,test_loader_out):
+            for batch_idx,(batch_data_in,batch_data_deform,batch_data_out) in enumerate(zip(test_loader_in,test_loader_deform,test_loader_out)):
                 batch_data_in = batch_data_in[0].to(self.device)
                 batch_data_deform = batch_data_deform[0].to(self.device)
                 batch_data_out = batch_data_out[0].to(self.device)
@@ -655,7 +668,7 @@ class BuildTsunamiAE():
 
             #early stopping
             if epoch - min_epoch > self.es_gap:
-                print('early stopping at epoch:',epoch)
+                print('early stopping at epoch:',epoch, 'min loss:',min_loss)
                 torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_estop_{epoch}_{self.train_size}.pt')
                 ex.log_scalar(f'es_epoch_{self.job}/', min_epoch)
                 break
@@ -684,7 +697,7 @@ class BuildTsunamiAE():
                     batch_size_on = 100, #depends on GPU memory
                     control_points = [], #control points for evaluation
                     threshold = 0.1, #threshold for evaluation
-                    device = torch.device("cpu"),
+                    device = torch.device("cuda"),
                     ):
         
         self.job = 'evaluate'
@@ -716,6 +729,7 @@ class BuildTsunamiAE():
                 batch_data_in = batch_data_in[0].to(self.device)
                 batch_data_deform = batch_data_deform[0].to(self.device)
                 batch_data_out = batch_data_out[0].to(self.device)
+
                 recon_data = model(batch_data_in,batch_data_deform)
                 loss = self.criterion(recon_data, batch_data_out)
                 test_loss += loss.item()
@@ -740,7 +754,7 @@ class BuildTsunamiAE():
         plt.xlabel('True')
         plt.ylabel('Reconstructed')
         plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')
-
+        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')
         #first calculate location index of control points for given lat and lon
         locindices = get_idx_from_latlon(control_points)
 
@@ -751,7 +765,7 @@ class BuildTsunamiAE():
         er_list = []
 
         #mse_val,r2_val,pt_er,KCap,Ksmall,truecount,predcount
-        test_ids = np.loadtxt(f'{self.MLDir}/data/events/shuffled_events_test_{self.test_size}.txt',dtype='str')
+        test_ids = np.loadtxt(f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt',dtype='str')
         for eve_no,eve in enumerate(test_ids):
             scores = calc_scores(data_out[eve_no,:], predic[eve_no,:],locindices,threshold=0.1)
             eve_perf.append([scores[0],scores[1],#scores[3],scores[4], #mse,r2,KCap,Ksmall
@@ -769,7 +783,9 @@ class BuildTsunamiAE():
 
         #combine columns of true,pred,er into 12 column array
         true_pred_er = np.column_stack((true_list,pred_list,er_list))
-
+        np.savetxt(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.txt',true_pred_er,fmt='%1.4f')
+        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.txt')
+        
         #print overall performance metrics for whole training exercise and evaluation work : mseoverall, K, k, r2maxdepth
         # Calculate mseoverall and r2maxdepth
         mseoverall = mean_squared_error(data_out, predic)
@@ -795,19 +811,20 @@ class BuildTsunamiAE():
             #calculate hit and mis for each location based on depth of true and prediction
             #events crossing the threshold of 0.2 are considered flooded
             neve = np.count_nonzero(true_pred_er[:,i]>threshold) # no of flooded grid points in the event
+            neve_pred = np.count_nonzero(true_pred_er[:,i+4]>threshold) # no of flooded grid points in the prediction
             # print(neve)
             #true positive: true>0.2 and pred>0.2
             TP = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]>threshold))/(neve)
             TN = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]<threshold))/(len(true_pred_er[:,i])-neve)
             FP = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]>threshold))/(len(true_pred_er[:,i])-neve)
             FN = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]<threshold))/(neve)
-            plt.title(f"Control Location:{i+1},No of flood events:{neve}/len:{len(true_pred_er[:,i])}")
+            plt.title(f"Control Location:{i+1},No of flood events:T{neve}/P{neve_pred}/len:{len(true_pred_er[:,i])}")
             plt.text(0.78, 0.9, f" TP: {TP:.2f}, TN: {TN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
             plt.text(0.78, 0.75, f"FP: {FP:.2f}, FN: {FN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
             plt.xlabel('Error')
             plt.ylabel('Count')
-        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_error_testsize{self.test_size}.png')
-        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_error_testsize{self.test_size}.png')
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
+        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
 
 def calc_scores(true,pred,locindices,threshold=0.1): #for each event
     #only test where there is significant flooding
@@ -837,11 +854,11 @@ def calc_scores(true,pred,locindices,threshold=0.1): #for each event
     return mse_val,r2_val,true[locindices],pred[locindices],pt_er 
 
 @ex.capture
-def get_idx_from_latlon(locations,reg,MLDir,SimDir,train_size):  
+def get_idx_from_latlon(locations,reg,MLDir,SimDir,mask_size):  
     #get first event to get lat lon
     firstevent = np.loadtxt(f'{MLDir}/data/events/sample_events53550.txt',dtype='str')[0]
     D_grids = xr.open_dataset(f'{SimDir}/{firstevent}/{reg}_flowdepth.nc')
-    zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{train_size}.npy')
+    zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     non_zero_list = np.argwhere(~zero_mask).tolist()
 
     #iterate over list locations
@@ -856,6 +873,7 @@ def get_idx_from_latlon(locations,reg,MLDir,SimDir,train_size):
         indices.append(idx)
 
     # return lat_idx, lon_idx, idx
+    print(indices)
     return indices
 
 def process_ts(file):
@@ -1077,6 +1095,8 @@ def read_memmap(MLDir,
         size = str(train_size)
     elif what4 == 'test':
         size = str(test_size)
+    
+    print('reading memmap for', what4, 'data','size:', size)
 
     #read the data
     t_array = np.memmap(f'{MLDir}/data/processed/t_{reg}_{size}.dat',
@@ -1104,9 +1124,23 @@ def read_memmap(MLDir,
         red_dZ_array = (red_dZ_array - dZmin) / (dZmax - dZmin)
 
     if standardize:
-        t_array = (t_array - np.mean(t_array)) / np.std(t_array)
-        red_d_array = (red_d_array - np.mean(red_d_array)) / np.std(red_d_array)
-        red_dZ_array = (red_dZ_array - np.mean(red_dZ_array)) / np.std(red_dZ_array)
+        if what4 == 'train':
+            tmn = np.mean(t_array)
+            tsd = np.std(t_array)
+            dmn = np.mean(red_d_array)
+            dsd = np.std(red_d_array)
+            dZmn = np.mean(red_dZ_array)
+            dZsd = np.std(red_dZ_array) 
+            std_para = [tmn,tsd,dmn,dsd,dZmn,dZsd]
+            #save to file
+            np.savetxt(f'{MLDir}/data/processed/std_para_{reg}_{size}.txt', std_para, delimiter=',')      
+        else:
+            std_para = np.loadtxt(f'{MLDir}/data/processed/std_para_{reg}_{train_size}.txt', delimiter=',')
+            tmn,tsd,dmn,dsd,dZmn,dZsd = std_para         
+
+        t_array = (t_array - tmn) / tsd
+        red_d_array = (red_d_array - dmn) / dsd
+        red_dZ_array = (red_dZ_array - dZmn) / dZsd
 
     return t_array, red_d_array, red_dZ_array
 

@@ -32,11 +32,12 @@ if mode == 'train':
 elif mode == 'test':
     #or whole directory for final evaluation
     # event_list = os.listdir(f'{SimDir}')
-    event_list = np.loadtxt(f'{MLDir}/data/events/sample_events53550.txt', dtype='str')
-    np.random.shuffle(event_list)
-    event_list = event_list[:int(size)]
-    #save event list
-    np.savetxt(f'{MLDir}/data/events/shuffled_events_{mode}_{size}.txt', event_list, fmt='%s')
+    # event_list = np.loadtxt(f'{MLDir}/data/events/sample_events53550.txt', dtype='str')
+    # np.random.shuffle(event_list)
+    # event_list = event_list[:int(size)]
+    # #save event list
+    # np.savetxt(f'{MLDir}/data/events/shuffled_events_{mode}_{size}.txt', event_list, fmt='%s')
+    event_list = np.loadtxt(f'{MLDir}/data/events/shuffled_events_test_{reg}_{size}.txt', dtype='str')
 
 #note size is the size of selection but not the number of events in the actual event list which can be less 
 #than the size of selection if there are events that dont satisfy threshold criterias
@@ -113,13 +114,16 @@ t_array = np.transpose(t_array, (0,2,1))
 
 if mode == 'train':
     # find elements in d_array which are always zero across all the events
-    zero_indices = np.where(np.all(d_array == 0, axis=0))
-    zero_mask = np.all(d_array == 0, axis=0) #non flooded
-    print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
-    non_zero_mask = ~zero_mask #flooded 
-    print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
-    #savemask
-    np.save(f'{MLDir}/data/processed/zero_mask_{reg}_{size}.npy', zero_mask)
+    # zero_indices = np.where(np.all(d_array == 0, axis=0))
+    # zero_mask = np.all(d_array == 0, axis=0) #non flooded
+    # print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
+    # non_zero_mask = ~zero_mask #flooded 
+    # print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
+    # #savemask
+    # np.save(f'{MLDir}/data/processed/zero_mask_{reg}_{size}.npy', zero_mask)
+    #load mask instead of calculating it
+    zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
+    non_zero_mask = ~zero_mask
 elif mode == 'test':
     #load mask
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
