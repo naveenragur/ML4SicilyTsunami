@@ -120,7 +120,7 @@ def config():
     epoch_onshore = None
 
     # Define the number of layers to be tuned
-    interface_layers = 1 #no of layers in the interface between encoder and decoder
+    interface_layers = 2 #no of layers in the interface between encoder and decoder
     tune_nlayers = 1 #last n layer of encoder and first layer of decoder are also tunable
 
     #for evaluation
