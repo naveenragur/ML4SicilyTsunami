@@ -713,7 +713,7 @@ class BuildTsunamiAE():
             model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt') 
         model.eval()
 
-        print('model summary.....')
+        # print('model summary.....')
         # summary(model,[(model_def[0],model_def[1]),(model_def[2])])
 
         #load data
@@ -813,7 +813,7 @@ class BuildTsunamiAE():
             neve = np.count_nonzero(true_pred_er[:,i]>threshold) # no of flooded grid points in the event
             neve_pred = np.count_nonzero(true_pred_er[:,i+4]>threshold) # no of flooded grid points in the prediction
             # print(neve)
-            #true positive: true>0.2 and pred>0.2
+            #true positive: true>0.2 and pred>0.2 if threshold is 0.2
             TP = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]>threshold))/(neve)
             TN = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]<threshold))/(len(true_pred_er[:,i])-neve)
             FP = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]>threshold))/(len(true_pred_er[:,i])-neve)
