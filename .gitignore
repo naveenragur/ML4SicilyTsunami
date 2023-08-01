@@ -19,7 +19,7 @@ scripts/HPC/configs/*
 
 scripts/experiments/sbatch/*.txt
 scripts/experiments/configs/fontlist-v330.json
-scripts/experiments/__pycache__
+scripts/experiments/__pycache__/*
 scripts/experiments/.neptune
 scripts/experiments/sacred_logs/*
 scripts/experiments/sbatch/*.txt
