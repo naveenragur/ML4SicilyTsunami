@@ -6,7 +6,6 @@
 #SBATCH --cpus-per-task=2 # number of cores per task
 #SBATCH --time=0-06:00 # time limit (D-HH:MM)
 #SBATCH -p gpuq # partition
-#SBATCH --mem=16G # memory pool for all cores
 #SBATCH --output ./log/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./log/error-%j.txt        # Standard err goes to this file
 
@@ -33,7 +32,7 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 # running commands
 cd $MLDir/scripts/HPC
 
-python checkgpu.py
+# python checkgpu.py
 
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
@@ -41,8 +40,10 @@ python checkgpu.py
 # echo 'Running 01_splitevents.py'
 # python 01_splitevents.py $region $size $mode $masksize
 
-# echo 'Running 02_preprocess.py'
-# python 02_preprocess.py $region $size $mode $masksize
+echo 'Running 02_preprocess.py'
+python 02_preprocess.py CT 1 test 2400
+python 02_preprocess.py CT 2 test 2400
+python 02_preprocess.py CT 3 test 2400
 
 # echo 'Running 03_pretrain_offshore.py'
 # python 03_pretrain_offshore.py $region $size $mode $masksize
