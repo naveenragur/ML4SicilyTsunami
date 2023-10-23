@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # options for sbatch
-#SBATCH --job-name=trainTsuML # Job name
+#SBATCH --job-name=CalcTsuWP # Job name
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --cpus-per-task=2 # number of cores per task
 #SBATCH --time=0-06:00 # time limit (D-HH:MM)
@@ -37,13 +37,17 @@ cd $MLDir/scripts/HPC
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
 
+# echo 'Running 00_waveperiond.py'
+python 00_waveperiod.py $region $size $mode $masksize
+
 # echo 'Running 01_splitevents.py'
 # python 01_splitevents.py $region $size $mode $masksize
 
-echo 'Running 02_preprocess.py'
-python 02_preprocess.py CT 1 test 2400
-python 02_preprocess.py CT 2 test 2400
-python 02_preprocess.py CT 3 test 2400
+# echo 'Running 02_preprocess.py'
+# # python 02_preprocess.py $region $size $mode $masksize
+# # python 02_preprocess.py SR 500 train 2400
+# python 02_preprocess.py CT 491 test 2400
+
 
 # echo 'Running 03_pretrain_offshore.py'
 # python 03_pretrain_offshore.py $region $size $mode $masksize

@@ -124,10 +124,14 @@ if mode == 'train':
     #load mask instead of calculating it
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     non_zero_mask = ~zero_mask
+    print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
+    print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
 elif mode == 'test':
     #load mask
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     non_zero_mask = ~zero_mask
+    print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
+    print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
 
 #remove elements which are always zero across all the events ir reduced d_array
 red_d_array = d_array[:, ~zero_mask] #note: its a 2d array: events X (948*1300) ie events X 70k/123k locations

@@ -1,5 +1,3 @@
-data/simu/*
-
 data/events/shuffled*
 data/events/test*
 data/events/train*
@@ -7,22 +5,29 @@ data/events/train*
 data/processed/*.dat
 data/processed/*.npy
 
+data/simu/*
+
 *.tar
 *tar.gz
 
-model/SR/out
-model/CT/out
+model/*
+resources/processed/eve_rate/*
 
-scripts/HPC/log/*.txt
-scripts/HPC/__pycache__/*
-scripts/HPC/configs/*
-
-scripts/experiments/sbatch/*.txt
-scripts/experiments/configs/fontlist-v330.json
 scripts/experiments/__pycache__/*
-scripts/experiments/.neptune
+scripts/experiments/.neptune/*
+scripts/experiments/configs/*
 scripts/experiments/sacred_logs/*
 scripts/experiments/sbatch/*.txt
 
+scripts/HPC/__pycache__/*
+scripts/HPC/configs/*
+scripts/HPC/log/*
 
-resources/processed/eve_rate/*
+scripts/WC/__pycache__/*
+scripts/WC/.neptune/*
+scripts/WC/configs/*
+scripts/WC/log/*
+scripts/WC/sacred_logs/*
+
+
+

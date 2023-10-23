@@ -1,1 +1,0 @@
-SLURM log folder is here: 

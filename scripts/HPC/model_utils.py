@@ -662,8 +662,8 @@ def process_ts(file):
 
     for g in range(87):
         #find peaks(positive and negative)
-        ppeaks, _ = scipy.signal.find_peaks(ts[:,g], height=0.05,distance=50)
-        npeaks, _ = scipy.signal.find_peaks(-ts[:,g], height=0.05,distance=50)
+        ppeaks, _ = scipy.signal.find_peaks(ts[:,g], height=0.05,distance=10)
+        npeaks, _ = scipy.signal.find_peaks(-ts[:,g], height=0.05,distance=10)
 
         #find polarity of wave based on positive and negative peaks indices
         if len(ppeaks)==0 and len(npeaks)==0:
@@ -686,12 +686,12 @@ def process_ts(file):
             if len(ppeaks)==1:
                 waveperiod = 0
             else:
-                waveperiod = (ppeaks[1]-ppeaks[0])*30
+                waveperiod = (ppeaks[1]-ppeaks[0])
         elif polarity == '-1':
             if len(npeaks)==1:
                 waveperiod = 0
             else:
-                waveperiod = (npeaks[1]-npeaks[0])*30
+                waveperiod = (npeaks[1]-npeaks[0])
 
         #return code
         if polarity == '0':
@@ -721,7 +721,8 @@ def process_ts(file):
 
     #save to csv
     df.to_csv(file.replace('grid0_ts.nc','grid0_ts.nc.offshore.txt'),index=False,sep='\t')
-
+ 
+    return df['period']
 
 def sample_train_events(data, #input dataframe with event info 
                         importance_column='mean_prob', #column name for importance weighted sampling
