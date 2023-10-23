@@ -2,8 +2,9 @@
 # options for sbatch
 #SBATCH --job-name=trainTsuML # Job name
 #SBATCH --nodes=1 # number of nodes
+##SBATCH --nodelist=gp02
 #SBATCH --ntasks-per-node=1 # number of tasks
-#SBATCH --time=0-06:00 # time limit (D-HH:MM)
+#SBATCH --time=0-09:00 # time limit (D-HH:MM)
 #SBATCH -p gpuq # partition
 #SBATCH --gres=gpu:1 # number of GPUs
 #SBATCH --mem=64G # memory pool for all cores
@@ -21,7 +22,7 @@ source /home/${USER}/.bash_profile # loading bash_proi
 conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 
 #jobs
-python main.py #with 'reg=SR' 'train_size=300'
+python main.py with 'reg=SR' 'train_size=1200' 'lr_couple=0.0025'
 
 # finished commands
 echo ...........

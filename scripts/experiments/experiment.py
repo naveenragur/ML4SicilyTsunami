@@ -94,18 +94,18 @@ def config():
     pts_dim = 480 #time series length
 
     # Define hyperparameters and training configurations
-    lr = 0.001
+    lr = 0.0001
     lr_on = 0.0025
     lr_deform = 0.0025
     lr_couple = 0.0005
 
     es_gap = 1000
     step_size = 300
-    gamma = 0.8
+    gamma = 0.9
     
-    batch_size = 500
-    batch_size_on = 50
-    nepochs = 5000
+    batch_size = 300
+    batch_size_on = 300
+    nepochs = 3000
     split = 0.75
 
     # Additional variables for the model architecture
@@ -522,8 +522,8 @@ class BuildTsunamiAE():
             #early stopping
             if epoch - min_epoch > self.es_gap:
                 print('early stopping at epoch:',epoch)
-                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_estop_{epoch}_{self.train_size}.pt')
-                ex.log_scalar(f'es_epoch_{self.job}/', epoch)
+                # torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_estop_{epoch}_{self.train_size}.pt')
+                # ex.log_scalar(f'es_epoch_{self.job}/', epoch)
                 break
         
         self.min_epoch = min_epoch
@@ -669,8 +669,8 @@ class BuildTsunamiAE():
             #early stopping
             if epoch - min_epoch > self.es_gap:
                 print('early stopping at epoch:',epoch, 'min loss:',min_loss)
-                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_estop_{epoch}_{self.train_size}.pt')
-                ex.log_scalar(f'es_epoch_{self.job}/', min_epoch)
+                # torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_estop_{epoch}_{self.train_size}.pt')
+                # ex.log_scalar(f'es_epoch_{self.job}/', min_epoch)
                 break
         
         self.min_epoch = min_epoch
@@ -697,7 +697,7 @@ class BuildTsunamiAE():
                     batch_size_on = 100, #depends on GPU memory
                     control_points = [], #control points for evaluation
                     threshold = 0.1, #threshold for evaluation
-                    device = torch.device("cuda"),
+                    device =  torch.device("cpu"),
                     ):
         
         self.job = 'evaluate'
@@ -708,15 +708,24 @@ class BuildTsunamiAE():
              
         #read model from file for testing
         if epoch is None:
-            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt')
+            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
         else:
-            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt') 
+            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt',map_location=torch.device('cpu')) 
         model.eval()
 
         # print('model summary.....')
         # summary(model,[(model_def[0],model_def[1]),(model_def[2])])
 
         #load data
+        # data_in = torch.tensor(data_in, dtype=torch.float32).to('cpu')
+        # data_deform = torch.tensor(data_deform, dtype=torch.float32).to('cpu')
+        # data_out = torch.tensor(data_out, dtype=torch.float32).to('cpu')
+        # with torch.no_grad():
+        #     recon_data= model(data_in,data_deform)
+        #     loss = self.criterion(recon_data, data_out)
+        # print(f"test loss: {loss / len(data_in):.5f}")
+        # predic = recon_data.cpu().numpy()
+
         test_loader_in = self.dataloader(data_in)
         test_loader_deform = self.dataloader(data_deform)
         test_loader_out = self.dataloader(data_out)
@@ -767,7 +776,7 @@ class BuildTsunamiAE():
         #mse_val,r2_val,pt_er,KCap,Ksmall,truecount,predcount
         test_ids = np.loadtxt(f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt',dtype='str')
         for eve_no,eve in enumerate(test_ids):
-            scores = calc_scores(data_out[eve_no,:], predic[eve_no,:],locindices,threshold=0.1)
+            scores = calc_scores(data_out[eve_no,:], predic[eve_no,:],locindices,threshold)
             eve_perf.append([scores[0],scores[1],#scores[3],scores[4], #mse,r2,KCap,Ksmall
                             np.count_nonzero(data_out[eve_no,:]), #true count
                             np.count_nonzero(predic[eve_no,:])]) #pred count
@@ -812,12 +821,12 @@ class BuildTsunamiAE():
             #events crossing the threshold of 0.2 are considered flooded
             neve = np.count_nonzero(true_pred_er[:,i]>threshold) # no of flooded grid points in the event
             neve_pred = np.count_nonzero(true_pred_er[:,i+4]>threshold) # no of flooded grid points in the prediction
-            # print(neve)
+
             #true positive: true>0.2 and pred>0.2 if threshold is 0.2
             TP = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]>threshold))/(neve)
-            TN = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]<threshold))/(len(true_pred_er[:,i])-neve)
-            FP = np.count_nonzero((true_pred_er[:,i]<threshold) & (true_pred_er[:,i+4]>threshold))/(len(true_pred_er[:,i])-neve)
-            FN = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]<threshold))/(neve)
+            TN = np.count_nonzero((true_pred_er[:,i]<=threshold) & (true_pred_er[:,i+4]<=threshold))/(len(true_pred_er[:,i])-neve)
+            FP = np.count_nonzero((true_pred_er[:,i]<=threshold) & (true_pred_er[:,i+4]>threshold))/(len(true_pred_er[:,i])-neve)
+            FN = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+4]<=threshold))/(neve)
             plt.title(f"Control Location:{i+1},No of flood events:T{neve}/P{neve_pred}/len:{len(true_pred_er[:,i])}")
             plt.text(0.78, 0.9, f" TP: {TP:.2f}, TN: {TN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
             plt.text(0.78, 0.75, f"FP: {FP:.2f}, FN: {FN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=12)
@@ -826,7 +835,7 @@ class BuildTsunamiAE():
         plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
         ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
 
-def calc_scores(true,pred,locindices,threshold=0.1): #for each event
+def calc_scores(true,pred,locindices,threshold): #for each event
     #only test where there is significant flooding
     true[true<threshold] = 0
     pred[pred<threshold] = 0
