@@ -13,6 +13,8 @@ data/simu/*
 model/*
 resources/processed/eve_rate/*
 
+scripts/deform/log/*
+
 scripts/experiments/__pycache__/*
 scripts/experiments/.neptune/*
 scripts/experiments/configs/*
@@ -29,5 +31,9 @@ scripts/WC/configs/*
 scripts/WC/log/*
 scripts/WC/sacred_logs/*
 
-
+scripts/deform/__pycache__/*
+scripts/deform/.neptune/*
+scripts/deform/configs/*
+scripts/deform/log/*
+scripts/deform/sacred_logs/*
 

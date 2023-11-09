@@ -158,7 +158,6 @@ class Autoencoder_offshore(nn.Module):
         # less channel and layers less likely to overfit so better maximas and minimas
         # more accuracy but slower and more memory and data needed to train
         self.ch_list = ch_list
-
         # define encoder layers
         self.encoder = nn.Sequential(
             nn.Conv1d(ninputs, ch_list[0], kernel_size=3, padding=1),   
