@@ -1,11 +1,12 @@
 #Description: Preprocess the data offshore and onshore data for training and testing
 import os
 import sys
-
+os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
 import numpy as np
 import xarray as xr
+import matplotlib.pyplot as plt
 
-import model_utils as utils
+# import model_utils as utils
 
 try:
     MLDir = os.getenv('MLDir')
@@ -73,6 +74,8 @@ t_array = np.zeros((len(event_list), pts_dim, ts_dim))  #say for SR: no of event
 #loop over events 
 #TODO: if needed parallelize? the event list are split into chunks,process each chunk in parallel and merge the results
 for i, event in enumerate(event_list):
+    if i%1000 == 0:
+        print(f'Processing event {i+1} of {len(event_list)}')
     #read in data
     Dfile = Dpath.format(event, reg)
     # Hfile = Hpath.format(event, reg)
@@ -121,11 +124,47 @@ if mode == 'train':
     print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
     #savemask
     np.save(f'{MLDir}/data/processed/zero_mask_{reg}_{size}.npy', zero_mask)
+    #save zero indices
+    np.save(f'{MLDir}/data/processed/zero_indices_{reg}_{size}.npy', zero_indices)
+
+    #plot and save non zero mask
+    firstevent = event_list[0]
+    D_grids = xr.open_dataset(f'{SimDir}/{firstevent}/{reg}_flowdepth.nc')
+    non_zero_list = np.argwhere(~zero_mask).tolist()
+
+    #calculate lat lon for all non zero list
+    lat_list = []
+    lon_list = []
+    for idx in non_zero_list:
+        lat_list.append(D_grids.lat.values[idx[0]])
+        lon_list.append(D_grids.lon.values[idx[1]])
+    
+    D_grids.close()
+    
+    #combine lat,lon,idx into 3 column array
+    lat_lon_idx = np.column_stack((non_zero_list,lat_list,lon_list))
+
+    #plot the lat lon idx
+    plt.figure(figsize=(10,10))
+    plt.scatter(lat_lon_idx[:,3],lat_lon_idx[:,2],s=0.1)
+    plt.xlabel('longitude')
+    plt.ylabel('latitude')
+    #equal aspect ratio
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.title('Lat Lon of all non zero grids')
+    plt.show()
+
+    #save to processed folder
+    np.save(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.npy',lat_lon_idx)
+    #as txt
+    np.savetxt(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.txt',lat_lon_idx,fmt='%.5f',delimiter=',')
+
     #load mask instead of calculating it
     # zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     # non_zero_mask = ~zero_mask
     # print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
     # print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
+
 elif mode == 'test':
     #load mask
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -138,32 +177,34 @@ red_d_array = d_array[:, ~zero_mask] #note: its a 2d array: events X (948*1300) 
 red_dZ_array = dZ_array[:, ~zero_mask] #note: its a 2d array: events X (948*1300) ie events X 70k/123k locations
 
 #save as numpy binary files
-onshore_map = np.memmap(f'{MLDir}/data/processed/d_{reg}_{size}.dat',
-                         mode='w+',
-                         dtype=float,
-                         shape=(d_array.shape[0], d_array.shape[1], d_array.shape[2]))
-onshore_map[:] = d_array[:]
-
-dZonshore_map = np.memmap(f'{MLDir}/data/processed/dZ_{reg}_{size}.dat',
-                            mode='w+',
-                            dtype=float,
-                            shape=(dZ_array.shape[0], dZ_array.shape[1], dZ_array.shape[2]))
-dZonshore_map[:] = dZ_array[:]
-
-onshore_map2 = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{size}.dat',
-                         mode='w+',
-                         dtype=float,
-                         shape=(red_d_array.shape[0], red_d_array.shape[1]))
-onshore_map2[:] = red_d_array[:]
-
-dZonshore_map2 = np.memmap(f'{MLDir}/data/processed/dZflat_{reg}_{size}.dat',
-                            mode='w+',  
-                            dtype=float,
-                            shape=(red_dZ_array.shape[0], red_dZ_array.shape[1]))
-dZonshore_map2[:] = red_dZ_array[:]
-
+print('Saving data to memmap files')
+#offshore time series
 offshore_map = np.memmap(f'{MLDir}/data/processed/t_{reg}_{size}.dat',
                          mode='w+',
                          dtype=float,
                          shape=(t_array.shape[0], t_array.shape[1], t_array.shape[2]))
 offshore_map[:] = t_array[:]
+#onshore depths
+onshore_map = np.memmap(f'{MLDir}/data/processed/d_{reg}_{size}.dat',
+                         mode='w+',
+                         dtype=float,
+                         shape=(d_array.shape[0], d_array.shape[1], d_array.shape[2]))
+onshore_map[:] = d_array[:]
+#onshore deformations
+dZonshore_map = np.memmap(f'{MLDir}/data/processed/dZ_{reg}_{size}.dat',
+                            mode='w+',
+                            dtype=float,
+                            shape=(dZ_array.shape[0], dZ_array.shape[1], dZ_array.shape[2]))
+dZonshore_map[:] = dZ_array[:]
+#reduced onshore depths
+onshore_map2 = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{size}.dat',
+                         mode='w+',
+                         dtype=float,
+                         shape=(red_d_array.shape[0], red_d_array.shape[1]))
+onshore_map2[:] = red_d_array[:]
+#reduced onshore deformations
+dZonshore_map2 = np.memmap(f'{MLDir}/data/processed/dZflat_{reg}_{size}.dat',
+                            mode='w+',  
+                            dtype=float,
+                            shape=(red_dZ_array.shape[0], red_dZ_array.shape[1]))
+dZonshore_map2[:] = red_dZ_array[:]

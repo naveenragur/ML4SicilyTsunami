@@ -1,3 +1,7 @@
+.neptune
+**/sacred_logs/
+**/sbatch_logs/
+
 data/events/shuffled*
 data/events/test*
 data/events/train*
@@ -37,3 +41,9 @@ scripts/deform/configs/*
 scripts/deform/log/*
 scripts/deform/sacred_logs/*
 
+scripts/testing/__pycache__/*
+scripts/testing/.neptune/*
+scripts/testing/configs/*
+scripts/testing/log/*
+scripts/testing/sacred_logs/*
+scripts/testing/out/*
