@@ -20,25 +20,21 @@ os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
 import matplotlib.pyplot as plt
 import contextily as cx
 
+import neptune
+from neptune.integrations.sacred import NeptuneObserver
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 
-import neptune
-from neptune.integrations.sacred import NeptuneObserver
-
-import pynvml as pynvml
-import psutil
-
-# Set up Sacred experiment
+# # # Set up Sacred experiment
 ex = Experiment("autoencoder_experiment")
+
+# Set up Sacred observers, Set up the neptune instance and logger. Turn off if using just some function from this file
 ex.observers.append(FileStorageObserver.create("sacred_logs"))
 
-# Set up the neptune instance and logger
 run = neptune.init_run(project="naveenragur/ML4Sicily",
-                       source_files=["experiment.py","main.py","parameters.json","run.sbatch"],
-                       api_token=os.getenv('Neptune_api_token'),
-                       )
-
+                    source_files=["experiment.py","main.py","parameters.json","run.sbatch"],
+                    api_token=os.getenv('Neptune_api_token'),
+                    )
 ex.observers.append(NeptuneObserver(run=run))
 
 @ex.config
@@ -57,9 +53,9 @@ def config():
     
     # Define the region and data size parameters
     reg = "CT" #CT or SR
-    train_size = "2500" #eventset size for training & building the model
-    mask_size = "2500" #eventset size for masking
-    test_size = "6182" #eventset size for testing 
+    train_size = "6317" #eventset size for training & building the model
+    mask_size = "6317" #eventset size for masking
+    test_size = "6421" #eventset size for testing 
 
     # Define the model region related size/architecture
     if reg == 'SR':
@@ -94,27 +90,27 @@ def config():
     pts_dim = 480 #time series length
 
     # Define hyperparameters and training configurations
-    lr = 0.0001
+    lr = 0.005
     lr_on = 0.0025
     lr_deform = 0.0025
     lr_couple = 0.0005
 
-    es_gap = 333
-    step_size = 300
-    gamma = 0.9
+    es_gap = 500
+    step_size = 500
+    gamma = 0.75
     
     batch_size = 300
     batch_size_on = 300
-    batch_size_deform = 30
-    nepochs = 3000
+    batch_size_deform = 300
+    nepochs = 3500
     split = 0.75
 
     # Additional variables for the model architecture
     z = 64
-    hdim = 512
+    h = 10
     channels_off = [64,128,256]
-    channels_on = [64,64]
-    channels_deform = [8,16,32]
+    channels_on = [128,128,128]
+    channels_deform = [16,32,64,128]
 
     # Define the epoch number for loading the pretrained model
     epoch_offshore = None
@@ -122,7 +118,7 @@ def config():
     epoch_onshore = None
 
     # Define the number of layers to be tuned
-    interface_layers = 2 #no of layers in the interface between encoder and decoder
+    interface_layers = 0 #no of layers in the interface between encoder and decoder
     tune_nlayers = 1 #last n layer of encoder and first layer of decoder are also tunable
 
     #for evaluation
@@ -146,47 +142,36 @@ def set_seed_settings(seed):
     torch.set_float32_matmul_precision('medium')
     print('cuda is:',torch.cuda.is_available())
 
-
 #build the offshore model
 class Autoencoder_offshore(nn.Module):
     def __init__(self,
                  ninputs=5, #number of input channels or gauges
                  t_len = 480, #number of time steps
                  ch_list = [32,64,96], #number of channels in each layer,
-                 hdim = 50, #hidden state dim for lstm
-                 zdim = 50):#number of latent variables
+                 zdim = 50,
+                 hdim = 50):#number of latent variables
         
         super(Autoencoder_offshore, self).__init__()
         # more channels mean more fine details, more resolution 
         # less channel and layers less likely to overfit so better maximas and minimas
         # more accuracy but slower and more memory and data needed to train
         self.ch_list = ch_list
+        self.hdim = hdim
+        self.zdim = zdim
+        
         # define encoder layers
         self.encoder = nn.Sequential(
             nn.Conv1d(ninputs, ch_list[0], kernel_size=3, padding=1),   
             nn.LeakyReLU(negative_slope=0.5,inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2),
+            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(ch_list[0], ch_list[1], kernel_size=3, padding=1),
             nn.LeakyReLU(negative_slope=0.5,inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2),
+            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(ch_list[1], ch_list[2], kernel_size=3, padding=1),
             nn.LeakyReLU(negative_slope=0.5,inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2),
+            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Dropout(0.1),
-        )
-        
-        self.fc1 = nn.Sequential(
-                                #  nn.Flatten(),
-                                #  nn.Linear(int(t_len*ch_list[-1]/(2**len(ch_list))), zdim),
-                                 nn.Linear(hdim,zdim),
-        )
-
-        self.fc2 = nn.Sequential(
-                                 nn.Linear(zdim,hdim),
-                                #  nn.Linear(zdim,int(t_len*ch_list[-1]/(2**len(ch_list)))),
-                                #  nn.Unflatten(1, (ch_list[-1], int(t_len/(2**len(ch_list))))),
-        )
-                                 
+        ) 
 
         # define decoder layers
         self.decoder = nn.Sequential(
@@ -198,28 +183,52 @@ class Autoencoder_offshore(nn.Module):
             nn.LeakyReLU(negative_slope=0.5,inplace=True) ,
         )
 
-        # Add the LSTM layer separately outside of the Sequential module
-        self.lstm_encoder = nn.LSTM(input_size=ch_list[2], hidden_size=hdim, num_layers=1, batch_first=True)
-        self.lstm_decoder = nn.LSTM(input_size=hdim, hidden_size=ch_list[2], num_layers=1, batch_first=True)
+        self.fc1 = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(zdim),
+            # nn.Dropout(0.1),
+        )
+
+        self.fc2 = nn.Sequential(
+            nn.LazyLinear((t_len*ch_list[2])//int(2**(len(ch_list)))),
+            # nn.Dropout(0.1),
+            nn.Unflatten(1,(ch_list[2],int(t_len//2**(len(ch_list))))),
+        )
+
+        # self.fc2 = nn.Sequential(
+        #     nn.LazyLinear((t_len*hdim)//int(2**(len(ch_list)))),
+        #     nn.Unflatten(1,(int(t_len//2**(len(ch_list))),hdim)),
+        # )
+
+        # Add the LSTM layer separately outside of the Sequential module which can be retuned during coupling
+        # self.lstm_encoder = nn.Sequential(
+        #     nn.LSTM(input_size=ch_list[2], hidden_size=hdim,num_layers=1, batch_first=True),
+        # )
+
+        # self.lstm_decoder = nn.Sequential(
+        #     nn.LSTM(input_size=hdim, hidden_size=ch_list[2],num_layers=1, batch_first=True),
+        # )
 
 
     def encode(self, x):
-        x = self.encoder(x)
-        x = x.permute(0, 2, 1)#permute to (batch, seq, feature)
-        x, (h_n, c_n) = self.lstm_encoder(x)
-        x = self.fc1(x) #compress to latent variables
-        return x #latent variables
+        x = self.encoder(x) #cnn encoder
+        # x = x.permute(0, 2, 1)#permute to (batch, seq-t, features-gauges or channels)
+        # x, (h_n, c_n) = self.lstm_encoder(x)
+        return x
     
     def decode(self, x):
-        x = self.fc2(x) #expand latent variables
-        x, (h_n, c_n) = self.lstm_decoder(x)
-        x = x.permute(0, 2, 1) #permute to (batch, seq, feature)
-        x = self.decoder(x)
-        return x #reconstructed time series
+        # x, (h_n, c_n) = self.lstm_decoder(x)
+        # x = x.permute(0, 2, 1)#permute to (batch, seq-t, features-gauges or channels)
+        x = self.decoder(x) #cnn decoder
+        return x
     
     def forward(self, x):
+        # x = nn.functional.interpolate(x, scale_factor=4, mode='linear')
         x = self.encode(x)  
-        x = self.decode(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.decode(x)      
+        # x = nn.functional.interpolate(x, scale_factor=0.25, mode='linear')
         return x
 
 #build the onshore model
@@ -291,7 +300,7 @@ class Autoencoder_onshore(nn.Module):
 class Autoencoder_deformation(nn.Module):
     def __init__(self,
                  xy,
-                 df_list=[16, 32, 64], zdim=50):
+                 df_list=[16, 32, 64,128], zdim=50):
         super(Autoencoder_deformation, self).__init__()
         self.xy = xy
 
@@ -299,35 +308,46 @@ class Autoencoder_deformation(nn.Module):
         self.encoder = nn.Sequential(
             nn.Conv1d(1, df_list[0], kernel_size=7, stride=4, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
+            nn.MaxPool1d(kernel_size=10, stride=10),
             nn.Conv1d(df_list[0], df_list[1], kernel_size=5, stride=2, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
+            nn.MaxPool1d(kernel_size=5, stride=5),
             nn.Conv1d(df_list[1], df_list[2], kernel_size=3, stride=2, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
-        )
-
-        # Calculate the dimensions for the linear layer
-        linear_input_size = df_list[2] * (xy // 16)
-
-        self.linear_layer = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(linear_input_size, zdim),
+            nn.MaxPool1d(kernel_size=3, stride=3),
+            nn.Conv1d(df_list[2], df_list[3], kernel_size=3, stride=2, padding=1),
+            nn.LeakyReLU(negative_slope=0.5, inplace=True),
+            nn.MaxPool1d(kernel_size=3, stride=3),
+            nn.Dropout(0.1),
         )
 
         # Define decoder layers
         self.decoder = nn.Sequential(
-            nn.Linear(zdim, linear_input_size),
-            nn.Unflatten(1, (df_list[2], xy // 16)),
-            nn.ConvTranspose1d(df_list[2], df_list[1], kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose1d(df_list[3], df_list[2], kernel_size=7, stride=4, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
-            nn.ConvTranspose1d(df_list[1], df_list[0], kernel_size=5, stride=2, padding=1),
+            nn.ConvTranspose1d(df_list[2], df_list[1], kernel_size=6, stride=4, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
-            nn.ConvTranspose1d(df_list[0], 1, kernel_size=7, stride=4, padding=2),
+            nn.ConvTranspose1d(df_list[1], df_list[0], kernel_size=5, stride=4, padding=1),
+            nn.LeakyReLU(negative_slope=0.5, inplace=True),
+            nn.ConvTranspose1d(df_list[0], 1, kernel_size=5, stride=4, padding=1),
             nn.LeakyReLU(negative_slope=0.5, inplace=True),
         )
 
+        self.fc1 = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(zdim),
+            # nn.Dropout(0.1),
+        )
+
+        self.fc2 = nn.Sequential(
+            nn.LazyLinear(df_list[3] * (xy // 256)),
+            # nn.Dropout(0.1),
+            nn.Unflatten(1,(df_list[3],(xy // 256))),
+        )
+
+
     def encode(self, x):
         x = self.encoder(x)
-        x = self.linear_layer(x)
         return x
 
     def decode(self, x):
@@ -335,13 +355,15 @@ class Autoencoder_deformation(nn.Module):
         return x
 
     def forward(self, x):
-        x = x.unsqueeze(1)
+        x = x.unsqueeze(1) #add channel dimension
         x = self.encode(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
         x = self.decode(x)
-        x = x[:, :, :self.xy]
-        x = x.squeeze(1)
+        print(x.shape)
+        x = x[:, :, :self.xy] #crop to original size
+        x = x.squeeze(1) #remove channel dimension
         return x
-
 
 #build the coupled model
 class Autoencoder_coupled(nn.Module):
@@ -356,68 +378,100 @@ class Autoencoder_coupled(nn.Module):
         # Pretrained offshore 
         self.offshore_encoder = offshore_model.encoder
         for i, layer in enumerate(self.offshore_encoder):
-            if i < len(self.offshore_encoder) - tune_nlayers: #all layers except last n layers
                 for param in layer.parameters():
                     param.requires_grad = False
-            else:
-                for param in layer.parameters(): #last layer
+
+        self.offshore_fc1 = offshore_model.fc1
+        for i, layer in enumerate(self.offshore_fc1):
+                for param in layer.parameters(): #layer is tunable
                     param.requires_grad = True
+
+        #some fine tuning of offshore model,TODO:convert to LSTM later
+        self.offshore_tune = nn.Sequential(
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+            )
 
         # Pretrained deform 
         self.deform_encoder = deform_model.encoder
         for i, layer in enumerate(self.deform_encoder):
-            if i < len(self.deform_encoder) - tune_nlayers: #all layers except last n layers
                 for param in layer.parameters():
                     param.requires_grad = False
+        self.deform_fc1 = deform_model.fc1
+        for i, layer in enumerate(self.offshore_fc1):
+                for param in layer.parameters(): #layer is tunable
+                    param.requires_grad = True
+
+        #some fine tuning of deform model
+        self.deform_tune = nn.Sequential(
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+            ) 
+
+        # Pretrained onshore model
+        self.onshore_decoder = onshore_model.decoder 
+        for i, layer in enumerate(self.onshore_decoder):
+            if i < tune_nlayers:
+                for param in layer.parameters(): #first layer is tunable
+                    param.requires_grad = True
             else:
-                for param in layer.parameters(): #last layer
+                for param in layer.parameters(): #all layers except first layer are frozen
                     param.requires_grad = True
 
         # Interface
         self.interface_layers = interface_layers
         if self.interface_layers == 1:
             self.connect = nn.Sequential(
-                                nn.Linear(
-                                    in_features=64, out_features=64
-                                ),
-                                nn.ReLU(),
+                                nn.LazyLinear(256),
+                                nn.LeakyReLU(inplace=True),
             ) 
         elif self.interface_layers == 2:    
             self.connect = nn.Sequential(
-                                    nn.Linear(
-                                        in_features=64, out_features=64
-                                    ),
-                                    nn.LeakyReLU(inplace=True),
-                                    nn.Linear(
-                                        in_features=64, out_features=64
-                                    ),
-                                    nn.LeakyReLU(inplace=True),
+                                nn.LazyLinear(256),
+                                nn.LeakyReLU(inplace=True),
+                                nn.LazyLinear(256),
+                                nn.LeakyReLU(inplace=True),
             )
-        elif self.interface_layers == 0:
-            self.connect = nn.Sequential(
-                                nn.Linear(
-                                    in_features=64, out_features=64
-                                ),
-                                nn.ReLU(),
-            )
-        # Pretrained onshore model
-        self.onshore_decoder = onshore_model.decoder 
-        for i, layer in enumerate(self.onshore_decoder):
-            if i < tune_nlayers:
-                for param in layer.parameters(): #first layer
-                    param.requires_grad = True
-            else:
-                for param in layer.parameters(): #all layers except first
-                    param.requires_grad = False
+
+        #remap filtered onshore depth corrections before applying
+        self.remap = nn.Sequential(
+                                nn.LazyLinear(16),
+                                nn.LeakyReLU(inplace=True),
+                                nn.LazyLinear(594725),
+                                nn.LeakyReLU(inplace=True),
+            ) 
+
 
     def forward(self, x, dz):
-        x = self.offshore_encoder(x)
-        # dz = self.deform_encoder(dz)
-        # x = torch.cat((x, dz), dim=1)
-        if self.interface_layers > 0:
-            x = self.connect(x)
-        x = self.onshore_decoder(x)
-        return x
+        #encode offshore time series to latent space
+        x = self.offshore_encoder(x)  #3 layers of CNN
+        x = self.offshore_fc1(x) #flatten and linear layer of latent space
+        x = self.offshore_tune(x) #retune to another dim latent space 
+
+        #encode deformation to latent space
+        #make copy of dz for skip connection
+        dz_raw = dz 
+        dz = dz.unsqueeze(1)
+        dz = self.deform_encoder(dz) #4 layers of CNN
+        dz = self.deform_fc1(dz) #flatten and linear layer of latent space
+        dz = self.deform_tune(dz)  #retune to another dim latent space 
+
+        # #common latent space from from encoders
+        z = torch.cat((x, dz), dim=1) #with concat converts to 2x latent space
+           
+        #retuning to onshore latent space
+        if self.interface_layers > 0: #linear layer 
+            z = self.connect(z)
+            # deltaz = self.connect(z)
+            # z = torch.add(z,deltaz)
+        
+        #decode to onshore
+        y = self.onshore_decoder(z)
+        # return y
+        dz_x_y = torch.mul(dz_raw,y)
+        dy = self.remap(dz_x_y)
+        corrected_y = torch.add(y,dy)
+        return corrected_y
 
 class BuildTsunamiAE():
     @ex.capture
@@ -426,12 +480,13 @@ class BuildTsunamiAE():
                 reg =None, #regularization
                 train_size =None, #training size
                 test_size =None, #test size
-                criteria = nn.MSELoss(), #loss function
+                criteria = nn.L1Loss(), #loss function
                 step_size = 100, #step size for scheduler
                 gamma = 0.1, #gamma for schedule""r
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
                 verbose = False,
-                es_gap = 1000 
+                es_gap = 1000,
+                seed = 0, 
                 ):
         self.model = None
         self.optimizer = None
@@ -445,6 +500,7 @@ class BuildTsunamiAE():
         self.test_size = test_size
         self.verbose = verbose
         self.es_gap = es_gap
+        self.seed = seed
     
     def configure_optimizers(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
@@ -453,10 +509,13 @@ class BuildTsunamiAE():
             self.scheduler = StepLR(self.optimizer, self.step_size, self.gamma)
 
     def dataloader(self,dataset):
-        tensor_dataset = TensorDataset(torch.Tensor(dataset))
+        tensor_dataset = TensorDataset(torch.Tensor(dataset)) #alternatively use TensorDataset(torch.from_numpy(dataset))
         return DataLoader(tensor_dataset, batch_size=self.batch_size, shuffle = False)
 
     def get_dataloader(self, any_data):
+        # # #shuffle any data before splitting
+        # np.random.seed(self.seed) #to try a different consistent shuffle across datasets - offshore,onshore,deform
+        # np.random.shuffle(any_data) #and see if helps in training
         train_data = any_data[0 : int(len(any_data)*0.99*self.split)]
         val_data = any_data[int(len(any_data)*0.99*self.split) : int(len(any_data)*self.split)]
         test_data = any_data[int(len(any_data)*self.split) : ]
@@ -499,8 +558,9 @@ class BuildTsunamiAE():
                 n  = None , #no of offshore gauges or inundated grids
                 t  = None , #no of pts of time (480 time steps)
                 z  = None, #latent dim for offshore only
+                h = None, #hidden state dim for LSTM
                 channels = None, #channels for offshore(1DCNN) or #channels for onshore(fully connected)
-                nepochs =100,
+                nepochs = 100,
                 ):
         #type and data
         self.job = job
@@ -512,13 +572,14 @@ class BuildTsunamiAE():
 
         #model parameters/architecture
         self.z = z
+        self.h = h
         self.channels = channels
         self.n = n
         self.t = t
         
         #initialize model/settings
         if self.job == 'offshore':
-            self.model = Autoencoder_offshore(ninputs=self.n, t_len=self.t, ch_list=self.channels, zdim=self.z)
+            self.model = Autoencoder_offshore(ninputs=self.n, t_len=self.t, ch_list=self.channels, zdim=self.z, hdim=self.h)
             self.lr = lr
         elif self.job == 'onshore' :
             self.model = Autoencoder_onshore(xy=self.n, zlist=self.channels)
@@ -536,6 +597,7 @@ class BuildTsunamiAE():
         train_loader, val_loader, test_loader = self.get_dataloader(self.data) 
         self.train_epoch_losses, self.val_epoch_losses, self.test_epoch_losses = [], [], []
         
+        print('nepochs:',self.nepochs)
         # Train model
         for epoch in range(self.nepochs):
 
@@ -586,10 +648,10 @@ class BuildTsunamiAE():
             
             #overwrite epochs where val + test loss are the minimum and mark in plot below:
             if epoch == 0:
-                min_loss = avg_val_ls + avg_test_ls
+                min_loss = (val_loss + test_loss)/(len(val_loader)+len(test_loader))
                 min_epoch = epoch
-            elif avg_val_ls + avg_test_ls < min_loss:
-                min_loss = avg_val_ls + avg_test_ls
+            elif (val_loss + test_loss)/(len(val_loader)+len(test_loader)) < min_loss:
+                min_loss = (val_loss + test_loss)/(len(val_loader)+len(test_loader))
                 min_epoch = epoch
                 torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_ch_{self.channels}_minepoch_{self.train_size}.pt')
             
@@ -630,6 +692,7 @@ class BuildTsunamiAE():
             lr_couple,
             channels_off = [64,128,256], #channels for offshore(1DCNN)
             channels_on = [64,64], #channels for onshore(fully connected)
+            channels_deform = [16,32,64,128], #channels for deformation(1DCNN)
             couple_epochs = [None,None], # epochs for offshore and onshore model coupling otherwise min loss epoch is used
             interface_layers=2,
             tune_nlayers = 1
@@ -647,6 +710,7 @@ class BuildTsunamiAE():
         #model parameters/architecture
         self.channels_off = channels_off
         self.channels_on = channels_on
+        self.channels_deform = channels_deform
         self.couple_epochs = couple_epochs
         self.interface_layers = interface_layers
         self.tune_nlayers = tune_nlayers
@@ -655,11 +719,11 @@ class BuildTsunamiAE():
         #load model
         if self.couple_epochs[0] == None :
             self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_minepoch_{self.train_size}.pt")
-            self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deform_ch_{self.channels_on}_minepoch_{self.train_size}.pt")
+            self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deform_ch_{self.channels_deform}_minepoch_{self.train_size}.pt")
             self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshore_ch_{self.channels_on}_minepoch_{self.train_size}.pt")
         elif self.couple_epochs[0] != None :
             self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_epoch_{self.couple_epochs[0]}_{self.train_size}.pt")
-            self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deform_ch_{self.channels_on}_epoch_{self.couple_epochs[1]}_{self.train_size}.pt")
+            self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deform_ch_{self.channels_deform}_epoch_{self.couple_epochs[1]}_{self.train_size}.pt")
             self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshore_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt")
 
         print(self.interface_layers)    
@@ -719,8 +783,8 @@ class BuildTsunamiAE():
             log2neptune = True
             if log2neptune:
                 run[f'train/{self.job}/epochloss'].append(avg_train_ls)
-                run[f'val/{self.job}//epochloss'].append(avg_val_ls)
-                run[f'test/{self.job}//epochloss'].append(avg_test_ls)
+                run[f'val/{self.job}/epochloss'].append(avg_val_ls)
+                run[f'test/{self.job}/epochloss'].append(avg_test_ls)
 
             if self.verbose:
                 print(f'epoch:{epoch},training loss:{avg_train_ls:.5f},val loss:{avg_val_ls:.5f},test loss:{avg_test_ls:.5f}', end='\r')
@@ -1014,7 +1078,6 @@ def Gfit_one(obs, pred): #a normalized least-squares
     Gvalue = 1 - (2*np.sum(obs*pred)/(np.sum(obs**2)+np.sum(pred**2)))
     return Gvalue
     
-
 @ex.capture
 def get_idx_from_latlon(locations,reg,MLDir,SimDir,mask_size):  
     #get first event to get lat lon
@@ -1109,7 +1172,6 @@ def process_ts(file):
 
     #save to csv
     df.to_csv(file.replace('grid0_ts.nc','grid0_ts.nc.offshore.txt'),index=False,sep='\t')
-
 
 def sample_train_events(data, #input dataframe with event info 
                         importance_column='mean_prob', #column name for importance weighted sampling
@@ -1262,17 +1324,17 @@ def read_memmap(MLDir,
 
     #read the data
     t_array = np.memmap(f'{MLDir}/data/processed/t_{reg}_{size}.dat',
-            mode='r+',
+            mode='r',
             dtype=float,
             shape=(n_eve, ts_dim, pts_dim))
 
     red_d_array = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{size}.dat',
-                            mode='r+',
+                            mode='r',
                             dtype=float,
                             shape=(n_eve, nflood_grids))
 
     red_dZ_array = np.memmap(f'{MLDir}/data/processed/dZflat_{reg}_{size}.dat',
-                                mode='r+',
+                                mode='r',
                                 dtype=float,
                                 shape=(n_eve, nflood_grids))
     
@@ -1281,28 +1343,53 @@ def read_memmap(MLDir,
     dZmin,dZmax = -5,5
 
     if normalize:
-        t_array = (t_array - tmin) / (tmax - tmin)
-        red_d_array = (red_d_array - dmin) / (dmax - dmin)
-        red_dZ_array = (red_dZ_array - dZmin) / (dZmax - dZmin)
+        print('normalizing data')
+        # # Perform normalization and standardization in a single step
+        # t_array -= t_array.min()
+        # t_array /= t_array.max()
+
+        # red_d_array -= red_d_array.min()
+        # red_d_array /= red_d_array.max()
+
+        # red_dZ_array -= red_dZ_array.min()
+        # red_dZ_array /= red_dZ_array.max()
+        # Apply normalization using predefined values
+        t_array -= tmin
+        t_array /= (tmax - tmin)
+
+        red_d_array -= dmin
+        red_d_array /= (dmax - dmin)
+
+        red_dZ_array -= dZmin
+        red_dZ_array /= (dZmax - dZmin)
 
     if standardize:
+        print('standardizing data')
         if what4 == 'train':
-            tmn = np.mean(t_array)
-            tsd = np.std(t_array)
-            dmn = np.mean(red_d_array)
-            dsd = np.std(red_d_array)
-            dZmn = np.mean(red_dZ_array)
-            dZsd = np.std(red_dZ_array) 
-            std_para = [tmn,tsd,dmn,dsd,dZmn,dZsd]
-            #save to file
-            np.savetxt(f'{MLDir}/data/processed/std_para_{reg}_{size}.txt', std_para, delimiter=',')      
-        else:
-            std_para = np.loadtxt(f'{MLDir}/data/processed/std_para_{reg}_{train_size}.txt', delimiter=',')
-            tmn,tsd,dmn,dsd,dZmn,dZsd = std_para         
+            # Calculate mean and standard deviation for training data
+            tmn, tsd = np.mean(t_array), np.std(t_array)
+            dmn, dsd = np.mean(red_d_array), np.std(red_d_array)
+            dZmn, dZsd = np.mean(red_dZ_array), np.std(red_dZ_array)
 
-        t_array = (t_array - tmn) / tsd
-        red_d_array = (red_d_array - dmn) / dsd
-        red_dZ_array = (red_dZ_array - dZmn) / dZsd
+            std_para = [tmn, tsd, dmn, dsd, dZmn, dZsd]
+
+            # Save to file
+            np.savetxt(f'{MLDir}/data/processed/std_para_{reg}_{size}.txt', std_para, delimiter=',')
+        else:
+            # Load mean and standard deviation for test data
+            std_para = np.loadtxt(f'{MLDir}/data/processed/std_para_{reg}_{train_size}.txt', delimiter=',')
+            tmn, tsd, dmn, dsd, dZmn, dZsd = std_para
+
+        # Apply standardization using calculated mean and standard deviation
+        t_array -= tmn
+        t_array /= tsd
+
+        red_d_array -= dmn
+        red_d_array /= dsd
+
+        red_dZ_array -= dZmn
+        red_dZ_array /= dZsd
 
     return t_array, red_d_array, red_dZ_array
+
 

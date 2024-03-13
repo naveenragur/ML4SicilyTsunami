@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # options for sbatch
-#SBATCH --job-name=CalcTsuWP # Job name
+#SBATCH --account=PR_carisma
+#SBATCH --job-name=CalTsuPara # Job name
+#SBATCH --time=0-05:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
-#SBATCH --cpus-per-task=2 # number of cores per task
-#SBATCH --time=0-06:00 # time limit (D-HH:MM)
-#SBATCH -p gpuq # partition
+#SBATCH --partition=cpuq
 #SBATCH --output ./log/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./log/error-%j.txt        # Standard err goes to this file
 
@@ -38,7 +38,13 @@ cd $MLDir/scripts/HPC
 # python 00_filecheck.py $region $size $mode $masksize
 
 # echo 'Running 00_waveperiond.py'
-python 00_waveperiod.py $region $size $mode $masksize
+# python 00_waveperiod.py $region $size $mode $masksize
+
+# echo 'Running 00_maxheight.py'
+# python 00_maxheight.py $region 
+
+echo 'Running 00_calcFlowdepth.py'
+python 00_calcFlowdepth.py $region
 
 # echo 'Running 01_splitevents.py'
 # python 01_splitevents.py $region $size $mode $masksize
@@ -47,7 +53,6 @@ python 00_waveperiod.py $region $size $mode $masksize
 # # python 02_preprocess.py $region $size $mode $masksize
 # # python 02_preprocess.py SR 500 train 2400
 # python 02_preprocess.py CT 491 test 2400
-
 
 # echo 'Running 03_pretrain_offshore.py'
 # python 03_pretrain_offshore.py $region $size $mode $masksize

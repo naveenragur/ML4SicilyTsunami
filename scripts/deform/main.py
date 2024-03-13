@@ -4,7 +4,7 @@ import numpy as np
 import experiment as exp
 
 @exp.ex.automain
-def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_size_on,batch_size_deform,ts_dim,pts_dim,z,channels_off,channels_on,channels_deform):
+def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_size_on,batch_size_deform,ts_dim,pts_dim,z,h,channels_off,channels_on,channels_deform):
     # set seed and check cuda
     exp.set_seed_settings()
 
@@ -33,18 +33,21 @@ def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_siz
                                                          normalize=False,
                                                          standardize=False,)
    
-    AE.pretrain(job = 'offshore',
-               data = t_array,
-               n = ts_dim,
-               t = pts_dim,
-               z = z,
-               channels = channels_off)
+    # AE.pretrain(job = 'offshore',
+    #            data = t_array,
+    #            n = ts_dim,
+    #            t = pts_dim,
+    #            z = z,
+    #            h = h,
+    #            channels = channels_off,
+    #            nepochs = 600)
     
     # AE.pretrain(job = 'onshore',
     #            data = red_d_array,
     #            n = nflood_grids,
     #            channels = channels_on,
-    #            batch_size = batch_size_on)
+    #            batch_size = batch_size_on,
+    #            nepochs = 600)
     
     # AE.pretrain(job = 'deform',
     #            data = red_dZ_array,
@@ -52,11 +55,12 @@ def run_experiment(MLDir,reg,train_size,mask_size,test_size,batch_size,batch_siz
     #            channels = channels_deform,
     #            z = z,
     #            batch_size = batch_size_deform,
-    #            nepochs = 1000)
+    #            nepochs = 600)
 
-    # AE.finetuneAE(data_in=t_array,
-    #               data_deform=red_dZ_array,
-    #               data_out=red_d_array)
+    AE.finetuneAE(data_in=t_array,
+                  data_deform=red_dZ_array,
+                  data_out=red_d_array,
+                  nepochs = 1500)
 
     # Testing
     # event_list_path = f'{MLDir}/data/events/shuffled_events_test_{reg}_{test_size}.txt'
