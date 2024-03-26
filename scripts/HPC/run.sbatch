@@ -37,16 +37,19 @@ cd $MLDir/scripts/HPC
 # echo 'Running 00_filecheck.py'
 # python 00_filecheck.py $region $size $mode $masksize
 
+echo 'Running 00_wavespectral.py'
+python 00_wavespectral.py $region $size $mode $masksize
+
 # echo 'Running 00_waveperiond.py'
 # python 00_waveperiod.py $region $size $mode $masksize
 
 # echo 'Running 00_maxheight.py'
 # python 00_maxheight.py $region 
 
-echo 'Running 00_calcFlowdepth.py'
-python 00_calcFlowdepth.py $region
+# echo 'Running 00_calcFlowdepth.py'
+# python 00_calcFlowdepth.py $region
 
-# echo 'Running 01_splitevents.py'
+# echo 'Running 00_splitevents.py'
 # python 01_splitevents.py $region $size $mode $masksize
 
 # echo 'Running 02_preprocess.py'
