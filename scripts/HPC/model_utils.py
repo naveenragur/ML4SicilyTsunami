@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import scipy.signal
+from scipy.fft import fft, fftfreq
 
 import xarray as xr
 import os
@@ -657,6 +658,7 @@ def process_ts(file):
     maxTS = ts.max(axis=0)
     minTS = ts.min(axis=0)
     gperiod = []
+    dperiod = []
     gpolarity = []
     greturn_code = []
 
@@ -703,26 +705,43 @@ def process_ts(file):
         gpolarity.append(polarity)
         greturn_code.append(return_code)
 
+        # Define the time range for the entire dataset (600 minutes)
+        total_time_minutes = 240
+        time_step_minutes = 0.5
+        time = np.arange(0, total_time_minutes, time_step_minutes)
+
+        # Perform Fourier analysis on the tsunami data using scipy.fft
+        fft_tsunami_data = fft(ts[1:,g])
+        freqs = fftfreq(len(time), d=time_step_minutes)
+        psd = np.abs(fft_tsunami_data) ** 2       
+        #wave period with max spectral density
+        max_psd_idx = np.argmax(psd)
+        max_wave_period = 1/freqs[max_psd_idx]
+        #round to 1 decimal place
+        dperiod.append(round(max_wave_period,1))
+
     gperiod = np.array(gperiod)
+    dperiod = np.array(dperiod)
     gpolarity = np.array(gpolarity)
     greturn_code = np.array(greturn_code)
 
 
     #compile to dataframe #ID lon lat depth max_ssh min_ssh period polarity return_code
-    df = pd.DataFrame({'ID':np.arange(87)+1,
+    df = pd.DataFrame({'ID':np.arange(87),
                         'lon':data['longitude'].values,
                         'lat':data['latitude'].values,
                         'depth':data['deformed_bathy'].values,
                         'max_ssh':maxTS,
                         'min_ssh':minTS,
                         'period':gperiod,
+                        'dperiod':dperiod, #dperiod is 'dominant period
                         'polarity':gpolarity,
                         'return_code':greturn_code})
 
     #save to csv
     df.to_csv(file.replace('grid0_ts.nc','grid0_ts.nc.offshore.txt'),index=False,sep='\t')
  
-    return df['period']
+    return df['period'],df['dperiod']
 
 def sample_train_events(data, #input dataframe with event info 
                         importance_column='mean_prob', #column name for importance weighted sampling
@@ -807,7 +826,7 @@ def sample_events(wt_para = 'gridcount', #'LocationCount', 'mean_prob', 'importa
 
     sample_test = pd.concat([pd.concat(sample_step0, axis=0), pd.concat(sample_step1, axis=0)], axis=0)
 
-        #check unique events in sample
+    #check unique events in sample
     sample_len = len(sample_test['id'].unique())
     print(sample_len,'out of ',len(sample_test))
 
