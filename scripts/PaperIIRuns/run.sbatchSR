@@ -1,0 +1,130 @@
+#!/bin/bash
+#options for sbatch
+#SBATCH --account=PR_carisma
+#SBATCH --job-name=SR/T # Job name
+#SBATCH --time=0-12:00 # time limit (D-HH:MM)
+#SBATCH --nodes=1 # number of nodes
+#SBATCH --partition=cpuq
+#SBATCH --nodelist=cn04
+# #SBATCH -p gpuq # partition
+# #SBATCH --nodelist=gp01
+# #SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
+#SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
+# # SBATCH --array=12-15%4 # number of jobs to run
+
+# for calculating the amount of time the job takes
+begin=`date +%s`
+echo node: $HOSTNAME
+echo start time: `date`
+echo ...........
+
+# setting up variables if provided
+region=$1
+size=$2
+mode=$3
+masksize=$4
+split=$5
+#TODO: add channels, zdim, and other hyper parameters  like batch size, learning rate, epoch of pretrian etc
+
+# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize'
+
+# loading modules or conda
+source /home/${USER}/.bash_profile # loading bash_proi
+conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
+
+# running commands
+cd $MLDir/scripts/PaperIIRuns
+
+#quick commands
+# python checkgpu.py
+# nvidia-smi
+
+# echo 'Running 01_preprocess.py' 
+# python 01_preprocess.py SR 961 train 961 #min first set
+# python 01_preprocess.py SR 1773 train 961 #second set
+# python 01_preprocess.py SR 3669 train 961 #third set
+# python 01_preprocess.py SR 6941 train 961 #fourth set
+
+# python 01_preprocess.py SR 9186 train 961 #fourth set
+
+# python 01_preprocess.py SR 0 test 961 #first test set
+# python 01_preprocess.py SR 1 test 961 #second test set
+# python 01_preprocess.py SR 2 test 961 #third test set
+# python 01_preprocess.py SR 3 test 961 #fourth test set
+
+#pretraining encoders
+# python main.py with 'reg=SR' 'train_size=6941' 'mask_size=961' #offshore with 6941 mix events 
+# python main.py with 'reg=SR' 'train_size=9186' 'mask_size=961' #deform with 9186 deform events
+# python main.py with 'reg=SR' 'train_size=961' 'mask_size=961' #onshore with diff events
+# python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 
+# python main.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 
+# python main.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 
+
+
+# echo 'Running jobs for coupled models' 
+# python train.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'off_size=6941' 'deform_size=9186' 
+# python test.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'test_size=3' #evaluate
+
+# python train.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'off_size=6941' 'deform_size=9186'
+# python test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=3' #evaluate
+
+# python train.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 'off_size=6941' 'deform_size=9186'
+# python test.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 'test_size=3' #evaluate
+
+# python train.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'off_size=6941' 'deform_size=9186'
+# python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=3' #evaluate
+
+#post process
+# Define arrays for train sizes and test sizes
+# region=SR
+# mode=post
+# masksize=961
+# train_sizes=(961 1773 3669 6941)
+# test_sizes=(0 1 2 3)
+
+# # Calculate index for train_size and test_size based on SLURM_ARRAY_TASK_ID
+# train_index=$((SLURM_ARRAY_TASK_ID / 4))
+# test_index=$((SLURM_ARRAY_TASK_ID % 4))
+
+# train_size=${train_sizes[$train_index]}
+# test_size=${test_sizes[$test_index]}
+
+# echo "Running 02_postprocess.py for test size: $test_size and train size: $train_size" 
+# python 02_postprocess.py $region $test_size $mode $train_size $masksize
+
+#evaluation of post processed results
+# echo "Running final evaluation with postprocessed prediction for test size: $test_size and train size: $train_size" 
+# python test.py with "reg=$region" "train_size=$train_size" "mask_size=$masksize" "test_size=$test_size"
+
+#reprocess the results to a single binary file
+# echo "Reprocessing the results to a single binary file for train size: $train_size"
+# python 03_reprocess.py SR reprocess 961
+# python 03_reprocess.py SR reprocess 1773
+# python 03_reprocess.py SR reprocess 3669
+# python 03_reprocess.py SR reprocess 6941
+
+#PTHA calculation
+# echo "PTHA processing for all grids"
+# python 04_calcPTHA.py CT PTHA 961 961
+# python 04_calcPTHA.py CT PTHA 1773 961
+# python 04_calcPTHA.py CT PTHA 3669 961
+# python 04_calcPTHA.py CT reprocess 6941 961
+
+# finished commands
+echo ...........
+end=`date +%s`
+elapsed=`expr $end - $begin`
+echo Time taken: $elapsed seconds
