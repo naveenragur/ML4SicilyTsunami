@@ -17,8 +17,6 @@ data/simu/*
 *.tar
 *tar.gz
 
-model/*
-
 resources/processed/eve_rate/*
 
 scripts/Catania/__pycache__/*
