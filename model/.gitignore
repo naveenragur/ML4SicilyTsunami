@@ -1,0 +1,9 @@
+CT/out/*
+CT/plot/*
+CT/postprocess/*
+
+SR/out/*
+SR/plot/*
+SR/postprocess/*
+
+backup/*
