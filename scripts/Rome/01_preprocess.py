@@ -165,7 +165,7 @@ if mode == 'train':
     del non_zero_mask
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     non_zero_mask = ~zero_mask
-    print('Prepared mask of size: ', zero_mask.shape)
+    print('Prepared mask of size: ', zero_mask.shape, 'from event size:', mask_size)
     print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
     print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
 
@@ -173,11 +173,11 @@ elif mode == 'test':
     #load mask
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     non_zero_mask = ~zero_mask
-    print('Loaded mask of size: ', zero_mask.shape)
+    print('Loaded mask of size: ', zero_mask.shape, 'from event size:', mask_size)
     print(f'Number of zero count: {np.count_nonzero(zero_mask)}')
     print(f'Number of non zero count: {np.count_nonzero(non_zero_mask)}')
 
-#remove elements which are always zero across all the events ir reduced d_array
+#remove elements which are always zero across all the events in reduced d_array
 red_d_array = d_array[:, ~zero_mask] #note: its a 2d array: events X (948*1300) ie events X 70k/123k locations
 red_dZ_array = dZ_array[:, ~zero_mask] #note: its a 2d array: events X (948*1300) ie events X 70k/123k locations
 

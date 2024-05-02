@@ -1,0 +1,94 @@
+#!/bin/bash
+#options for sbatch
+#SBATCH --account=PR_carisma
+#SBATCH --job-name=SR/Post # Job name
+#SBATCH --time=0-12:00 # time limit (D-HH:MM)
+#SBATCH --nodes=1 # number of nodes
+#SBATCH --partition=cpuq
+#SBATCH --nodelist=cn07
+# #SBATCH -p gpuq # partition
+# #SBATCH --nodelist=gp01
+# #SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
+#SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
+#SBATCH --array=0-7%2 # number of jobs to run
+
+# for calculating the amount of time the job takes
+begin=`date +%s`
+echo node: $HOSTNAME
+echo start time: `date`
+echo ...........
+
+# setting up variables if provided
+region=$1
+size=$2
+mode=$3
+masksize=$4
+split=$5
+#TODO: add channels, zdim, and other hyper parameters  like batch size, learning rate, epoch of pretrian etc
+
+# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize'
+
+# loading modules or conda
+source /home/${USER}/.bash_profile # loading bash_proi
+conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
+
+# running commands
+cd $MLDir/scripts/Rome
+
+#quick commands
+# python checkgpu.py
+# nvidia-smi
+
+# echo 'Running 01_preprocess.py' 
+# python 01_preprocess.py SR 1783 train 1783 #min first set
+# python 01_preprocess.py SR 6648 train 1783 #second set
+# python 01_preprocess.py SR 0 test 1783 #first test set
+# python 01_preprocess.py SR 1 test 1783 #second test set
+# python 01_preprocess.py SR 2 test 1783 #third test set
+# python 01_preprocess.py SR 3 test 1783 #fourth test set
+
+# echo 'Running jobs for encoders, decoders and coupled models' 
+
+# python main.py with 'reg=SR' 'train_size=1783' 'mask_size=1783'
+# python test.py with 'reg=SR' 'train_size=1783' 'mask_size=1783' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=1783' 'mask_size=1783' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=1783' 'mask_size=1783' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=1783' 'mask_size=1783' 'test_size=3' #evaluate
+
+# python main.py with 'reg=SR' 'train_size=6648' 'mask_size=1783'
+# python test.py with 'reg=SR' 'train_size=6648' 'mask_size=1783' 'test_size=0' #evaluate
+# python test.py with 'reg=SR' 'train_size=6648' 'mask_size=1783' 'test_size=1' #evaluate
+# python test.py with 'reg=SR' 'train_size=6648' 'mask_size=1783' 'test_size=2' #evaluate
+# python test.py with 'reg=SR' 'train_size=6648' 'mask_size=1783' 'test_size=3' #evaluate
+
+#post process
+# setting up variables
+region=SR
+size=0
+mode=post
+masksize=1783
+
+# Adjusting test/train size based on array task id
+if [[ ${SLURM_ARRAY_TASK_ID} -lt 4 ]]; then
+    train_size=1783
+else
+    train_size=6648
+fi
+
+test_size=$(( ${SLURM_ARRAY_TASK_ID} % 4 ))
+
+# echo "Running 02_postprocess.py for test size: $test_size and train size: $train_size" 
+# python 02_postprocess.py $region $test_size $mode $train_size $masksize
+
+#evaluation of post processed results
+echo "Running final evaluation with postprocessed prediction for test size: $test_size and train size: $train_size" 
+python test.py with "reg=$region" "train_size=$train_size" "mask_size=$masksize" "test_size=$test_size"
+
+
+
+# finished commands
+echo ...........
+end=`date +%s`
+elapsed=`expr $end - $begin`
+echo Time taken: $elapsed seconds

@@ -5,6 +5,9 @@
 data/events/shuffled*
 data/events/test*
 data/events/train*
+data/events/old/*
+data/events/PostNGI/*
+data/events/Rome/*
 
 data/processed/*.dat
 data/processed/*.npy
@@ -15,9 +18,22 @@ data/simu/*
 *tar.gz
 
 model/*
+
 resources/processed/eve_rate/*
 
+scripts/Catania/__pycache__/*
+scripts/Catania/.neptune/*
+scripts/Catania/configs/*
+scripts/Catania/log/*
+scripts/Catania/sacred_logs/*
+scripts/Catania/out/*
+scripts/Catania/results
+
+scripts/deform/__pycache__/*
+scripts/deform/.neptune/*
+scripts/deform/configs/*
 scripts/deform/log/*
+scripts/deform/sacred_logs/*
 
 scripts/experiments/__pycache__/*
 scripts/experiments/.neptune/*
@@ -35,15 +51,18 @@ scripts/WC/configs/*
 scripts/WC/log/*
 scripts/WC/sacred_logs/*
 
-scripts/deform/__pycache__/*
-scripts/deform/.neptune/*
-scripts/deform/configs/*
-scripts/deform/log/*
-scripts/deform/sacred_logs/*
-
 scripts/testing/__pycache__/*
 scripts/testing/.neptune/*
 scripts/testing/configs/*
 scripts/testing/log/*
 scripts/testing/sacred_logs/*
 scripts/testing/out/*
+
+scripts/Rome/__pycache__/*
+scripts/testing/.neptune/*
+scripts/testing/configs/*
+scripts/testing/log/*
+scripts/testing/sacred_logs/*
+scripts/testing/out/*
+
+
