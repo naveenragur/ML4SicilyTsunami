@@ -1,9 +1,11 @@
 CT/out/*
 CT/plot/*
 CT/postprocess/*
+CT/PTHA/*
 
 SR/out/*
 SR/plot/*
 SR/postprocess/*
+SR/PTHA/*
 
 backup/*
