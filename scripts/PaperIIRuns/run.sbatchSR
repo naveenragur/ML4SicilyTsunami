@@ -1,14 +1,14 @@
 #!/bin/bash
 #options for sbatch
 #SBATCH --account=PR_carisma
-#SBATCH --job-name=SR/T # Job name
+#SBATCH --job-name=SR/PTHA # Job name
 #SBATCH --time=0-12:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn04
-# #SBATCH -p gpuq # partition
-# #SBATCH --nodelist=gp01
-# #SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=cn03
+# # SBATCH -p gpuq # partition
+# # SBATCH --nodelist=gp01
+# # SBATCH --gres=gpu:1 # number of GPUs
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 # # SBATCH --array=12-15%4 # number of jobs to run
@@ -61,6 +61,9 @@ cd $MLDir/scripts/PaperIIRuns
 # python main.py with 'reg=SR' 'train_size=3669' 'mask_size=961' 
 # python main.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 
 
+#direct training - fulltuneED 
+# echo 'Running jobs for single direct models' 
+# python train.py with 'reg=SR' 'train_size=1773' 'mask_size=961'
 
 # echo 'Running jobs for coupled models' 
 # python train.py with 'reg=SR' 'train_size=961' 'mask_size=961' 'off_size=6941' 'deform_size=9186' 
@@ -110,18 +113,20 @@ cd $MLDir/scripts/PaperIIRuns
 # python test.py with "reg=$region" "train_size=$train_size" "mask_size=$masksize" "test_size=$test_size"
 
 #reprocess the results to a single binary file
-# echo "Reprocessing the results to a single binary file for train size: $train_size"
-# python 03_reprocess.py SR reprocess 961
-# python 03_reprocess.py SR reprocess 1773
+# echo "Reprocessing the results to a single binary file for train size"
+# # python 03_reprocess.py SR reprocess 961
+# # python 03_reprocess.py SR reprocess 1773
 # python 03_reprocess.py SR reprocess 3669
 # python 03_reprocess.py SR reprocess 6941
 
-#PTHA calculation
-# echo "PTHA processing for all grids"
-# python 04_calcPTHA.py CT PTHA 961 961
-# python 04_calcPTHA.py CT PTHA 1773 961
-# python 04_calcPTHA.py CT PTHA 3669 961
-# python 04_calcPTHA.py CT reprocess 6941 961
+# PTHA calculation
+echo "PTHA processing for all grids"
+# python 04_calcPTHA.py SR PTHA 961 961
+# python 04_calcPTHA.py SR PTHA 1773 961
+# python 04_calcPTHA.py SR PTHA 3669 961
+python 04_calcPTHA.py SR PTHA 6941 961
+
+
 
 # finished commands
 echo ...........

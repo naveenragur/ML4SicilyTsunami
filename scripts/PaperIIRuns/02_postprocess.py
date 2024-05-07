@@ -22,7 +22,7 @@ except:
 #set seed
 np.random.seed(0)
 
-def process_map(eve_name,tmap_array,map_array, min_area=10, save_plots=False, save_output=False, output_file=None):
+def process_map(eve_name,train_size,tmap_array,map_array, min_area=10, save_plots=False, save_output=False, output_file=None):
     # Example usage:
     s = [[1,1,1],
         [1,1,1],
@@ -81,7 +81,7 @@ def process_map(eve_name,tmap_array,map_array, min_area=10, save_plots=False, sa
         # Common colorbar
         fig.colorbar(post, ax=[ax0, ax1, ax2], orientation='horizontal',shrink=0.5)
         plt.title(eve_name)
-        plt.savefig(f'{MLDir}/model/{reg}/postprocess/{event}.png')
+        plt.savefig(f'{MLDir}/model/{reg}/postprocess/{event}_train_size{train_size}.png')
         plt.close()
 
     else:
@@ -136,19 +136,21 @@ for i, event in enumerate(event_list):
     event_out_2d = np.zeros((y_dim,x_dim))
     event_out_2d[~zero_mask] = model_out[i]
     #postprocess data
-    event_out_2d = process_map(event,dtrue, event_out_2d, min_area=10, save_plots=True, save_output=False, output_file=f'{MLDir}/model/{reg}/postprocess/{event}.npy')
+    event_out_2d = process_map(event,train_size,dtrue, event_out_2d, min_area=10, save_plots=True, save_output=False, output_file=f'{MLDir}/model/{reg}/postprocess/{event}_trainsize{train_size}.npy')
     empty_model_out[i,:] = event_out_2d[~zero_mask]
 
 #save postprocessed data
 np.save(f'{MLDir}/model/{reg}/out/postprocessed_trainsize{train_size}_testsize{test_size}.npy', empty_model_out)
 
-#save as memap file like reduced onshore depths in preprocessing
-onshore_map = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{test_size}_prediction.dat',
-                         mode='w+',
-                         dtype=float,
-                         shape=(empty_model_out.shape[0], empty_model_out.shape[1]))
+onshore_map = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{test_size}_{train_size}_prediction.dat',
+                        mode='w+',
+                        dtype=float,
+                        shape=(empty_model_out.shape[0], empty_model_out.shape[1]))
 
 onshore_map[:] = empty_model_out[:]
+
+print(f'Onshore data for test size {test_size} saved with events {empty_model_out.shape[0]} and locations {empty_model_out.shape[1]}')
+
 
 
 
