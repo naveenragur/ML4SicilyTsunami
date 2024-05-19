@@ -121,11 +121,18 @@ cd $MLDir/scripts/PaperIIRuns
 # python 03_reprocess.py CT reprocess 7071
 
 #PTHA calculation
-echo "PTHA processing for all grids"
+# echo "PTHA processing for all grids"
 # python 04_calcPTHA.py CT PTHA 892 892
 # python 04_calcPTHA.py CT PTHA 1658 892
 # python 04_calcPTHA.py CT PTHA 3454 892
-python 04_calcPTHA.py CT PTHA 7071 892
+# python 04_calcPTHA.py CT PTHA 7071 892
+
+#Grid calculation
+echo "Performance calculation for all grids"
+# python 05_calcPerfGrid.py CT Grid 892 892
+python 05_calcPerfGrid.py CT Grid 1658 892
+# python 05_calcPerfGrid.py CT Grid 3454 892
+# python 05_calcPerfGrid.py CT Grid 7071 892
 
 # finished commands
 echo ...........

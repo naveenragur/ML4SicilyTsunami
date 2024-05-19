@@ -450,9 +450,9 @@ class Autoencoder_coupled2(nn.Module):
         #freeze all decoder layers in the onshore_split_decoders 
         for i, decoder in enumerate(self.onshore_split_decoders):
             for param in decoder.parameters():
-                param.requires_grad = False
+                param.requires_grad = False #final model head decoder is frozen
 
-        # Interface
+        # Interface is tunable
         self.interface_layers = interface_layers
         if self.interface_layers == 1:
             self.connect = nn.Sequential(
@@ -469,7 +469,7 @@ class Autoencoder_coupled2(nn.Module):
 
         self.dropout = nn.Dropout(0.5)
 
-    def forward(self, x, dz_red, dz_raw):
+    def forward(self, x, dz_red, dz_raw): #dz_red is the reduced deformation data not used for any bias correction or skip connection as originally intended
 
         #encode offshore time series to latent space
         x = self.offshore_encoder(x)  #3 layers of CNN
