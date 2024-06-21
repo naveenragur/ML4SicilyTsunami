@@ -76,7 +76,18 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     #               batch_size = batch_size_deform,
     #               nepochs = 200)
 
+    # AE.fulltuneED(
+    #             job = 'withdeform', #nodeform or withdeform
+    #             data_in=t_array,
+    #             data_deformfull=dZ_array,
+    #             data_out=red_d_array,
+    #             n = nflood_grids,
+    #             parts = parts,
+    #             batch_size = batch_size_deform,
+    #             nepochs = 2000)
+    
     AE.fulltuneED(
+                job = 'nodeform', #nodeform or withdeform
                 data_in=t_array,
                 data_deformfull=dZ_array,
                 data_out=red_d_array,

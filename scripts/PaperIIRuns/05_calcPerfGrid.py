@@ -84,47 +84,108 @@ if mode == 'Grid':
     sample_idx = eve_dep['eve_id'].isin(eve_SIS['eve_id'])
     rate = eve_perf['mean_prob']
 
-    #load true and pred depth tables for a train_size
     #n_eve x nflood_grids
-    pred_d = np.load(f'{MLDir}/model/{reg}/PTHA/pred_d_{train_size}.npy')
-    true_d = np.load(f'{MLDir}/model/{reg}/PTHA/true_d_53550.npy')
-
-    #pick event index which are test events from eve_perf
+    pred_d = np.load(f'{MLDir}/model/{reg}/PTHA/pred_d_{train_size}.npy').astype(np.int32)
+    true_d = np.load(f'{MLDir}/model/{reg}/PTHA/true_d_53550.npy').astype(np.int32)
+    
+    #pick event index which are test events from eve_perf 
+    # train-test split
     eve_test = eve_perf['split']== 'test'
-    pred_d = pred_d[eve_test]
+    pred_d_test = pred_d[eve_test]
     true_d_test = true_d[eve_test]
     rate = rate[eve_test]
 
     eve_train = eve_perf['split']== 'train'
+    pred_d_train = pred_d[eve_train]
     true_d_train = true_d[eve_train]
+
+    #test and additonal split
+    eve_BS = (eve_perf['SR']== 'BS') & (eve_perf['split']== 'test')
+    pred_d_BS = pred_d[eve_BS]
+    true_d_BS = true_d[eve_BS]
+
+    eve_PS = (eve_perf['SR']!= 'BS') & (eve_perf['split']== 'test')
+    pred_d_PS = pred_d[eve_PS]
+    true_d_PS = true_d[eve_PS]
+
+    eve_def = (eve_perf['max_absdz']>= 0.1) & (eve_perf['split']== 'test')
+    pred_d_def = pred_d[eve_def]
+    true_d_def = true_d[eve_def]
+
+    eve_nodef = (eve_perf['max_absdz']< 0.1) & (eve_perf['split']== 'test')
+    pred_d_nodef = pred_d[eve_nodef]
+    true_d_nodef = true_d[eve_nodef]
 
     #check if the number match
     print(pred_d.shape)
 
     #calculate R2, G , MSE and PTHA error(MSE wt by mean prob) for each event at each grid point
-    table = np.zeros((pred_d.shape[1],6)) #mse,r2,Gfit,ptha_err,count
+    table = np.zeros((pred_d.shape[1],22)) #mse,r2,Gfit,ptha_err,count_test,count_train, repeat mse,r2G for BS,PS, Deformation, No deformation
 
-    for i in range(pred_d.shape[1]):
+    for i in range(pred_d.shape[1]): #for each grid point
         if i%1000==0:
             print(i)
-        true = true_d_test[:,i] #per location all events
-        pred = pred_d[:,i]
+        #segregrate for each event classifcation
+        true_test = true_d_test[:,i] #per location all events
         true_train = true_d_train[:,i]
-        mse_val,r2_val,Gfit_val = calc_scores(true,pred) #mse_val,r2_val,Gfit_val
-        ptha_err_val = ptha_err(true,pred,rate)
+        true_BS = true_d_BS[:,i]
+        true_PS = true_d_PS[:,i]
+        true_def = true_d_def[:,i]
+        true_nodef = true_d_nodef[:,i]
 
+        pred_test = pred_d_test[:,i]
+        pred_train = pred_d_train[:,i]
+        pred_BS = pred_d_BS[:,i]
+        pred_PS = pred_d_PS[:,i]
+        pred_def = pred_d_def[:,i]
+        pred_nodef = pred_d_nodef[:,i]
+
+        #calculate scores
+        mse_val,r2_val,Gfit_val = calc_scores(true_test,pred_test) 
+        ptha_err_val = ptha_err(true_test,pred_test,rate)
         table[i,0] = mse_val
         table[i,1] = r2_val
         table[i,2] = Gfit_val
         table[i,3] = ptha_err_val
-        true[true<10] = 0
-        table[i,4] = np.count_nonzero(true)/true.shape[0] #count greater than 10cm (events x grids)
-        table[i,5] = np.count_nonzero(true_train)/true_train.shape[0]
+        table[i,4] = np.count_nonzero(true_test) 
+        table[i,5] = np.count_nonzero(true_train)
+
+        mse_val,r2_val,Gfit_val = calc_scores(true_BS,pred_BS) 
+        table[i,6] = mse_val
+        table[i,7] = r2_val
+        table[i,8] = Gfit_val
+        table[i,9] = np.count_nonzero(true_BS)
+
+        mse_val,r2_val,Gfit_val = calc_scores(true_PS,pred_PS) 
+        table[i,10] = mse_val
+        table[i,11] = r2_val
+        table[i,12] = Gfit_val
+        table[i,13] = np.count_nonzero(true_PS)
+
+        mse_val,r2_val,Gfit_val = calc_scores(true_def,pred_def)
+        table[i,14] = mse_val
+        table[i,15] = r2_val
+        table[i,16] = Gfit_val
+        table[i,17] = np.count_nonzero(true_def)
+
+        mse_val,r2_val,Gfit_val = calc_scores(true_nodef,pred_nodef) 
+        table[i,18] = mse_val
+        table[i,19] = r2_val
+        table[i,20] = Gfit_val
+        table[i,21] = np.count_nonzero(true_nodef)
 
     #save the table
     np.save(f'{MLDir}/model/{reg}/PTHA/Grid_scores_{train_size}.npy',table)
     
     #add header to the table
-    header = ['mse','r2','Gfit','ptha_err','count_test','count_train']
+    header = [
+              'mse','r2','Gfit','ptha_err',
+              'count_test','count_train',
+              'mse_BS','r2_BS','Gfit_BS','count_test_BS',
+              'mse_PS','r2_PS','Gfit_PS','count_test_PS',
+              'mse_def','r2_def','Gfit_def','count_test_def',
+              'mse_nodef','r2_nodef','Gfit_nodef','count_test_nodef',
+              ]
+    
     table = pd.DataFrame(table,columns=header)
-    table.to_csv(f'{MLDir}/model/{reg}/PTHA/Grid_scores_{train_size}.txt',index=False)
+    table.to_csv(f'{MLDir}/model/{reg}/PTHA/_Grid_scores_{train_size}.txt',index=False)

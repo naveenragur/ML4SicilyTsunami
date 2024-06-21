@@ -5,10 +5,10 @@
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn02
-# # SBATCH -p gpuq # partition
-# # SBATCH --nodelist=gp01
-# # SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=cn01
+# # #SBATCH -p gpuq # partition
+# # #SBATCH --nodelist=gp02
+# # #SBATCH --gres=gpu:1 # number of GPUs
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 # #SBATCH --array=12-15%4 # number of jobs to run
@@ -62,7 +62,7 @@ cd $MLDir/scripts/PaperIIRuns
 # python main.py with 'reg=CT' 'train_size=3454' 'mask_size=892' 
 # python main.py with 'reg=CT' 'train_size=7071' 'mask_size=892' 
 
-#direct training - fulltuneED 
+#direct training - fulltuneED or without deform input
 # echo 'Running jobs for single direct models' 
 # python train.py with 'reg=CT' 'train_size=1658' 'mask_size=892'
 
@@ -128,7 +128,7 @@ cd $MLDir/scripts/PaperIIRuns
 # python 04_calcPTHA.py CT PTHA 7071 892
 
 #Grid calculation
-echo "Performance calculation for all grids"
+# echo "Performance calculation for all grids"
 # python 05_calcPerfGrid.py CT Grid 892 892
 python 05_calcPerfGrid.py CT Grid 1658 892
 # python 05_calcPerfGrid.py CT Grid 3454 892
