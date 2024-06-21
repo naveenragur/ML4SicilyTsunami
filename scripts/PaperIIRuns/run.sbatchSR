@@ -7,7 +7,7 @@
 #SBATCH --partition=cpuq
 #SBATCH --nodelist=cn03
 # # SBATCH -p gpuq # partition
-# # SBATCH --nodelist=gp01
+# # SBATCH --nodelist=gp02
 # # SBATCH --gres=gpu:1 # number of GPUs
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
@@ -127,7 +127,7 @@ cd $MLDir/scripts/PaperIIRuns
 # python 04_calcPTHA.py SR PTHA 6941 961
 
 #Grid calculation
-echo "Performance calculation for all grids"
+# echo "Performance calculation for all grids"
 # python 05_calcPerfGrid.py SR Grid 961 961
 python 05_calcPerfGrid.py SR Grid  1773 961
 # python 05_calcPerfGrid.py SR Grid 3669 961

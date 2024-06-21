@@ -508,9 +508,9 @@ class Autoencoder_coupled2(nn.Module):
     
 class EncoderDecoder(nn.Module):
     def __init__(self,
-                x,
-                y,
-                xy,
+                x, #input wave data
+                y, #output depth data
+                xy, #output size
                 ninputs=5, #number of input channels or gauges
                 ch_list = [32,64,96], #number of channels in each layer,
                 zlist=[16, 256, 256],
@@ -620,6 +620,121 @@ class EncoderDecoder(nn.Module):
         y = torch.cat(decoded_splits, dim=1) #600k/parts to 600k
         y = y[:, :self.xy] #crop to original size
         return y
+    
+class EncoderDecoderSingle(nn.Module):
+    def __init__(self,
+                x,
+                y,
+                xy,
+                ninputs=5, #number of input channels or gauges
+                ch_list = [32,64,96], #number of channels in each layer,
+                zlist=[16, 256, 256],
+                df_list=[16, 32, 64, 128],
+                zdim = 50,
+                parts = 64,
+                ):
+        super(EncoderDecoderSingle, self).__init__()
+
+        self.ch_list = ch_list
+        self.parts = parts
+        self.x = x
+        self.y = y
+        self.xy = xy
+        self.split_size = (xy // parts)+1
+        self.zdim = zdim
+
+        # define offshore encoder layers
+        self.offshore_encoder = nn.Sequential(
+            nn.Conv1d(ninputs, ch_list[0], kernel_size=3, padding=1),   
+            nn.LeakyReLU(negative_slope=0.5,inplace=True),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(ch_list[0], ch_list[1], kernel_size=3, padding=1),
+            nn.LeakyReLU(negative_slope=0.5,inplace=True),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Conv1d(ch_list[1], ch_list[2], kernel_size=3, padding=1),
+            nn.LeakyReLU(negative_slope=0.5,inplace=True),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Dropout(0.1),
+        ) 
+
+        self.offshore_fc = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(zdim),
+        )
+
+        # # define deform encoder layers
+        # self.deform_encoder = nn.Sequential(
+        #     nn.Conv2d(1, df_list[0], kernel_size=3, stride=2, padding=1),
+        #     nn.LeakyReLU(negative_slope=0.5, inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        #     nn.Conv2d(df_list[0], df_list[1], kernel_size=3, stride=2, padding=1),
+        #     nn.LeakyReLU(negative_slope=0.5, inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        #     nn.Conv2d(df_list[1], df_list[2], kernel_size=3, stride=2, padding=1),
+        #     nn.LeakyReLU(negative_slope=0.5, inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        #     nn.Conv2d(df_list[2], df_list[3], kernel_size=3, stride=2, padding=1),
+        #     nn.LeakyReLU(negative_slope=0.5, inplace=True),
+        #     nn.Dropout(0.1),
+        # )
+
+        # self.deform_fc = nn.Sequential(
+        #     nn.Flatten(),
+        #     nn.LazyLinear(zdim),
+        # )
+
+        self.dropout = nn.Dropout(0.5)
+
+        self.connect = nn.Sequential(
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+            )
+
+
+        self.onshore_global_decoder = nn.Sequential(
+            nn.LazyLinear(zlist[-2]),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
+            nn.LazyLinear(zlist[-1]),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
+            nn.LazyLinear(zlist[0]*parts),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
+        )
+
+        self.onshore_split_decoders = nn.ModuleList()
+        for i in range(parts):
+            decoder = nn.Sequential(
+                nn.LazyLinear(self.split_size),
+                nn.LeakyReLU(negative_slope=0.01, inplace=True),
+            )
+            self.onshore_split_decoders.append(decoder)
+       
+    def forward(self, x, dz):
+        #encode offshore time series to latent space
+        x = self.offshore_encoder(x)
+        x = self.offshore_fc(x)
+        # #encode deformation to latent space
+        # dz = dz.unsqueeze(1)  
+        # dz = self.deform_encoder(dz)
+        # dz = self.deform_fc(dz)
+        # dz = dz.squeeze(1)
+        # #common latent space from from encoders
+        # z = torch.cat((x, dz), dim=1)
+        z = self.dropout(x)
+        z = self.connect(z)
+        #decode to onshore global intermediate latent space
+        global_decoded = self.onshore_global_decoder(z)
+        split_global_decoded = torch.chunk(global_decoded, self.parts, dim=1) #z[0]*parts 
+        # Decode each split independently
+        decoded_splits = []
+        for i in range(self.parts): #z[0]*parts to 600k/parts
+            decoded_split = self.onshore_split_decoders[i](split_global_decoded[i])
+            decoded_splits.append(decoded_split)
+        # Concatenate the decoded parts
+        y = torch.cat(decoded_splits, dim=1) #600k/parts to 600k
+        y = y[:, :self.xy] #crop to original size
+        return y
 
 
 class BuildTsunamiAE():
@@ -692,7 +807,7 @@ class BuildTsunamiAE():
             if self.job == 'couple':
                 plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
                 ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
-            elif self.job == 'direct':
+            elif self.job == 'withdeform' or self.job == 'nodeform':
                 plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
                 ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
             else:
@@ -1029,6 +1144,7 @@ class BuildTsunamiAE():
 
     @ex.capture
     def fulltuneED(self,
+            job,
             data_in, #training data offshore
             data_deformfull, #training data deformation
             data_out, #training data offshore
@@ -1071,18 +1187,29 @@ class BuildTsunamiAE():
         self.channels_on = channels_on
         self.channels_deform = channels_deform
         self.z = z
-        self.job = 'direct'
+        self.job = job #with deform or no deform
 
         # Initialize model,criteria	and optimizer
-        self.model = EncoderDecoder(ninputs=self.ninputs,
-                                    x=self.x_dim,
-                                    y=self.y_dim,
-                                    xy=self.xy,
-                                    ch_list=self.channels_off,
-                                    zlist=self.channels_on,
-                                    df_list=self.channels_deform,
-                                    zdim=self.z,
-                                    parts=self.parts)
+        if self.job == 'withdeform':
+            self.model = EncoderDecoder(ninputs=self.ninputs,
+                                        x=self.x_dim,
+                                        y=self.y_dim,
+                                        xy=self.xy,
+                                        ch_list=self.channels_off,
+                                        zlist=self.channels_on,
+                                        df_list=self.channels_deform,
+                                        zdim=self.z,
+                                        parts=self.parts)
+        elif self.job == 'nodeform':
+            self.model = EncoderDecoderSingle(ninputs=self.ninputs,
+                                        x=self.x_dim,
+                                        y=self.y_dim,
+                                        xy=self.xy,
+                                        ch_list=self.channels_off,
+                                        zlist=self.channels_on,
+                                        df_list=self.channels_deform,
+                                        zdim=self.z,
+                                        parts=self.parts)
 
         self.criterion = self.custom_loss_off #custom loss function      
         self.model.to(self.device)
