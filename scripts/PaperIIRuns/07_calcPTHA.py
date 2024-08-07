@@ -40,18 +40,40 @@ elif reg == 'CT':
     ts_dim = len(GaugeNo)
     pts_dim = 480
 
-def exceedance_curve(thresholds, max_stage_point, rates): 
-   # Annual Mean Rate of threshold exceedance 
-   lambda_exc = np.zeros((len(thresholds), 1000)) 
-   for threshold in range(len(thresholds)): 
-       ix = np.array(np.where(max_stage_point > thresholds[threshold])).squeeze() 
-       for j in range(1000): 
-           #for index in ix: 
-           lambda_exc[threshold, j] = lambda_exc[threshold, j] +  rates[ix,j].sum(axis=0) 
-   #------------------------------------------------ 
-   return lambda_exc 
+# def exceedance_curve(thresholds, max_stage_point, rates): 
+#    # Annual Mean Rate of threshold exceedance 
+#    lambda_exc = np.zeros((len(thresholds), 1000)) 
+#    for threshold in range(len(thresholds)): 
+#        ix = np.array(np.where(max_stage_point > thresholds[threshold])).squeeze() 
+#        for j in range(1000): 
+#            #for index in ix: 
+#            lambda_exc[threshold, j] = lambda_exc[threshold, j] +  rates[ix,j].sum(axis=0) 
+#    #------------------------------------------------ 
+#    return lambda_exc 
+# def make_map(RP_table_true,RP_table_pred,RP_table_sis,RPi):
+#     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+#     for i, ax in enumerate(axs):
+#         if i == 0:
+#             RP_table = RP_table_true
+#             title = 'True'
+#         elif i == 1:
+#             RP_table = RP_table_pred
+#             title = 'Pred'
+#         elif i == 2:
+#             RP_table = RP_table_sis
+#             title = 'SIS'
+#         array_2d = np.zeros((y_dim,x_dim))
+#         array_2d[~zero_mask] = RP_table[:,RPi]
+#         im = ax.imshow(array_2d, cmap='viridis',vmin=0, vmax=200)
+#         ax.invert_yaxis()
+#         ax.set_title(title)
+#         ax.axis('off')
+#     fig.colorbar(im, ax=axs.ravel().tolist(), orientation='horizontal',label='Depth (cm)')
+#     plt.suptitle(f'Return period depths at {RP_list[RPi]}')
+#     plt.savefig(f'{MLDir}/model/{reg}/PTHA/RP{RPi+1}_map_{train_size}.png')
+#     plt.close()
 
-def single_exceedance_curve(thresholds, max_stage_point, rates): 
+def single_exceedance_depth(thresholds, max_stage_point, rates): 
    # Annual Mean Rate of threshold exceedance 
    lambda_exc = np.zeros((len(thresholds))) 
    for threshold in range(len(thresholds)): 
@@ -70,39 +92,19 @@ def single_exceedance_rate(thresholds, max_stage_point, rates):
     #------------------------------------------------
     return lambda_exc
 
-def make_map(RP_table_true,RP_table_pred,RP_table_sis,RPi):
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    for i, ax in enumerate(axs):
-        if i == 0:
-            RP_table = RP_table_true
-            title = 'True'
-        elif i == 1:
-            RP_table = RP_table_pred
-            title = 'Pred'
-        elif i == 2:
-            RP_table = RP_table_sis
-            title = 'SIS'
-        array_2d = np.zeros((y_dim,x_dim))
-        array_2d[~zero_mask] = RP_table[:,RPi]
-        im = ax.imshow(array_2d, cmap='viridis',vmin=0, vmax=200)
-        ax.invert_yaxis()
-        ax.set_title(title)
-        ax.axis('off')
-    fig.colorbar(im, ax=axs.ravel().tolist(), orientation='horizontal',label='Depth (cm)')
-    plt.suptitle(f'Return period depths at {RP_list[RPi]}')
-    plt.savefig(f'{MLDir}/model/{reg}/PTHA/RP{RPi+1}_map_{train_size}.png')
-    plt.close()
-
 if mode == 'PTHA_rate':
     #check if PTHA directory exists
     if not os.path.exists(f'{MLDir}/model/{reg}/PTHA'):
         os.makedirs(f'{MLDir}/model/{reg}/PTHA')
 
-    RP_list = [100,1/10000,1/100000]
+    RP_list = [1/100,1/1000,1/10000,1/100000]
     Depth_list = [20,100,300,500]
     
     #load data
-    eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+    if reg == 'CT':
+        eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+    else:
+        eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
     flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     nflood_grids = np.count_nonzero(flood_mask)
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -112,6 +114,7 @@ if mode == 'PTHA_rate':
 
     true_d = np.load(f'{MLDir}/model/{reg}/PTHA/true_d_53550.npy')
     PTHA_table_true = np.zeros((nflood_grids,len(Depth_list)))
+    PTHA_depth_true = np.zeros((nflood_grids,len(RP_list)))
 
 
     for select_pt in range(nflood_grids): #nflood_grids
@@ -119,16 +122,18 @@ if mode == 'PTHA_rate':
         if select_pt % 50000 == 0:
             print(f'Processing point {select_pt}')
         PTHA_table_true[select_pt,:] = single_exceedance_rate(Depth_list, true_d[:,select_pt], rate)
+        PTHA_depth_true[select_pt,:] = single_exceedance_rate(RP_list, true_d[:,select_pt], rate)
        
     # save PTHA tables
-    np.save(f'{MLDir}/model/{reg}/PTHA/true_PTHArate_53500.npy',PTHA_table_true)
+    np.save(f'{MLDir}/model/{reg}/PTHA/true_PTHArate_53550.npy',PTHA_table_true)
+    np.save(f'{MLDir}/model/{reg}/PTHA/true_PTHAdepth_53550.npy',PTHA_depth_true)
 
 elif mode == 'emulator_rate':
     #check if PTHA directory exists
     if not os.path.exists(f'{MLDir}/model/{reg}/PTHA'):
         os.makedirs(f'{MLDir}/model/{reg}/PTHA')
 
-    RP_list = [100,1/10000,1/100000]
+    RP_list = [1/100,1/1000,1/10000,1/100000]
     Depth_list = [20,100,300,500]
     
     #load data
@@ -136,7 +141,6 @@ elif mode == 'emulator_rate':
         eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
     else:
         eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
-    
     flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     nflood_grids = np.count_nonzero(flood_mask)
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -149,15 +153,19 @@ elif mode == 'emulator_rate':
     else:
         pred_d = np.load(f'{MLDir}/model/{reg}/PTHA/pred_d_{train_size}.npy')
     PTHA_table_pred = np.zeros((nflood_grids,len(Depth_list)))
+    PTHA_depth_pred = np.zeros((nflood_grids,len(Depth_list)))
 
     for select_pt in range(nflood_grids): #nflood_grids
         #compute exceedance rate for true
         if select_pt % 50000 == 0:
             print(f'Processing point {select_pt}')
         PTHA_table_pred[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[:,select_pt], rate)
+        PTHA_depth_pred[select_pt,:] = single_exceedance_rate(RP_list, pred_d[:,select_pt], rate)
        
     # save PTHA tables
     np.save(f'{MLDir}/model/{reg}/PTHA/pred_PTHArate_{train_size}.npy',PTHA_table_pred)
+    np.save(f'{MLDir}/model/{reg}/PTHA/pred_PTHAdepth_{train_size}.npy',PTHA_depth_pred)
+
 else:
     print('Error: Invalid mode')
 

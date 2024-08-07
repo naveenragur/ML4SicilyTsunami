@@ -84,12 +84,16 @@ if not os.path.exists(f'{MLDir}/model/{reg}/compare'):
 
 #predictions and post processed predictions
 true_depths = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/true_d_53550.npy')
+
 pred_depths_nodeform = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}_nodeform.npy')
 eve_perf_nodeform = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_nodeform_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+
 pred_depths_direct = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}_direct.npy')
 eve_perf_direct = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+
 pred_depths_pretrain = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}.npy')
 eve_perf_pretrain = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+
 eve_id = np.loadtxt('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/events/sample_events53550.txt',dtype='str')   
 #inundation attributes
 flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -100,7 +104,6 @@ index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.t
 index_map.columns = ['m','n','lat','lon'] #add column names
 
 if mode == 'compare':
-    ids = np.loadtxt()
     for id in eve_id:
         eve = np.where(eve_id==id)[0][0]
         print(id,'\n',eve)
@@ -246,7 +249,10 @@ if mode == 'compare':
         cbar3.set_label('Local Deform.(m)', fontsize=12)
         plt.tight_layout()
         plt.savefig(f'{MLDir}/model/{reg}/compare/Compare_TPE_{train_size}_{reg}_{str(eve)}.png',
-                    dpi=50, bbox_inches='tight', pad_inches=0.1)
+                    dpi=100, bbox_inches='tight', pad_inches=0.1)
+        #close figure
+        plt.close(fig)
+
 elif mode == 'compare_pygmt':
     for id in ids:
         eve = np.where(eve_id==id)[0][0]
