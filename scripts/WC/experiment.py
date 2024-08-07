@@ -34,12 +34,12 @@ ex = Experiment("autoencoder_experiment")
 ex.observers.append(FileStorageObserver.create("sacred_logs"))
 
 # Set up the neptune instance and logger
-run = neptune.init_run(project="naveenragur/ML4Sicily",
-                       source_files=["experiment.py","main.py","parameters.json","run.sbatch"],
-                       api_token=os.getenv('Neptune_api_token'),
-                       )
+# run = neptune.init_run(project="naveenragur/ML4Sicily",
+#                        source_files=["experiment.py","main.py","parameters.json","run.sbatch"],
+#                        api_token=os.getenv('Neptune_api_token'),
+#                        )
 
-ex.observers.append(NeptuneObserver(run=run))
+# ex.observers.append(NeptuneObserver(run=run))
 
 @ex.config
 def config():

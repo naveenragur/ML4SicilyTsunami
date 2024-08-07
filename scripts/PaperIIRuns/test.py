@@ -85,12 +85,11 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
                                                          normalize=False,
                                                          standardize=False,)
     
-    # epoch = '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/Catania/sacred_logs/33/model_couple_off[64, 128, 256]_on[16, 128, 128]_minepoch_4005.pt' 
-    #quick fix to load model path directly
+
     
     # #before post process, after training
     AE.evaluateAE(data_in=t_array,
-                  data_deform=red_d_array,
+                  data_deform=red_dZ_array,
                   data_deformfull=dZ_array,
                   data_out=red_d_array,
                   batch_size = 1000,
@@ -102,5 +101,24 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     #               data_out=red_d_array,
     #               reg_gaugeno = reg_gaugeno,
     #                 )
+    #used to test direct model without pretraining
+    # AE.evaluateED( #used to test direct model without pretraining
+    #               data_in=t_array,
+    #               data_deformfull=dZ_array,
+    #               data_out=red_d_array,
+    #               batch_size = 1000,
+    #               epoch=None,
+    #               reg_gaugeno = reg_gaugeno,
+    #                 )
+    #used to test direct model without pretraining, only waveform as input
+    # AE.evaluateEDSingle( 
+    #               data_in=t_array,
+    #               data_deformfull=dZ_array,
+    #               data_out=red_d_array,
+    #               batch_size = 1000,
+    #               epoch=None,
+    #               reg_gaugeno = reg_gaugeno,
+    #                 )
+
 exp.run.stop() #stop neptune run and sync files
 

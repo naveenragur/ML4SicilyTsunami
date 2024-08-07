@@ -34,7 +34,7 @@ ex = Experiment("autoencoder_experiment")
 ex.observers.append(FileStorageObserver.create("sacred_logs"))
 
 run = neptune.init_run(project="naveenragur/ML4Sicily",
-                    source_files=["experiment.py","main.py","parameters.json","run.sbatch","train.py","test.py"],
+                    source_files=["experiment.py","main.py","parameters.json","run.sbatchCT","train.py","test.py"],
                     api_token=os.getenv('Neptune_api_token'),
                     )
 ex.observers.append(NeptuneObserver(run=run))
@@ -99,7 +99,7 @@ def config():
     lr_deform = 0.0025
     lr_couple = 0.005
 
-    es_gap = 500
+    es_gap = 200
     step_size = 300
     gamma = 0.9
     
@@ -416,7 +416,7 @@ class Autoencoder_coupled2(nn.Module):
 
         # Pretrained offshore 
         self.offshore_encoder = offshore_model.encoder
-        for i, layer in enumerate(self.offshore_encoder): #first tune_n layers are frozen and rest free
+        for i, layer in enumerate(self.offshore_encoder): #first n layers are frozen and rest free
                 for param in layer.parameters(): #first layers are frozen
                     param.requires_grad = False
 
@@ -445,7 +445,7 @@ class Autoencoder_coupled2(nn.Module):
             else:
                 for param in layer.parameters(): #second layer is frozen
                     param.requires_grad = False
-
+        
         self.onshore_split_decoders = onshore_model.decoders
         #freeze all decoder layers in the onshore_split_decoders 
         for i, decoder in enumerate(self.onshore_split_decoders):
@@ -736,7 +736,6 @@ class EncoderDecoderSingle(nn.Module):
         y = y[:, :self.xy] #crop to original size
         return y
 
-
 class BuildTsunamiAE():
     @ex.capture
     def __init__(self,
@@ -963,7 +962,7 @@ class BuildTsunamiAE():
         ex.log_scalar(f'min_loss_{self.job}/', min_loss)
         ex.log_scalar(f'min_epoch_{self.job}/', min_epoch) 
 
-    @ex.capture
+    @ex.capture #build the coupled model using pretrained AE models
     def finetuneAE(self,
             data_in, #training data offshore
             data_deform, #training data deformation
@@ -1011,22 +1010,22 @@ class BuildTsunamiAE():
         #load model
         if self.off_size != '9999' and self.deform_size != '9999':
             if self.couple_epochs[0] == None :
-                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_minepoch_{self.off_size}.pt")
-                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_minepoch_{self.deform_size}.pt")
-                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_minepoch_{self.train_size}.pt")
+                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_minepoch_{self.off_size}.pt",map_location=self.device)
+                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_minepoch_{self.deform_size}.pt",map_location=self.device)
+                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_minepoch_{self.train_size}.pt",map_location=self.device)
             elif self.couple_epochs[0] != None :
-                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_epoch_{self.couple_epochs[0]}_{self.off_size}.pt")
-                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_epoch_{self.couple_epochs[1]}_{self.deform_size}.pt")
-                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt")
+                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_epoch_{self.couple_epochs[0]}_{self.off_size}.pt",map_location=self.device)
+                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_epoch_{self.couple_epochs[1]}_{self.deform_size}.pt",map_location=self.device)
+                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt",map_location=self.device)
         else:
             if self.couple_epochs[0] == None :
-                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_minepoch_{self.train_size}.pt")
-                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_minepoch_{self.train_size}.pt")
-                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_minepoch_{self.train_size}.pt")
+                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_minepoch_{self.train_size}.pt",map_location=self.device)
+                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_minepoch_{self.train_size}.pt",map_location=self.device)
+                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_minepoch_{self.train_size}.pt",map_location=self.device)
             elif self.couple_epochs[0] != None :
-                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_epoch_{self.couple_epochs[0]}_{self.train_size}.pt")
-                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_epoch_{self.couple_epochs[1]}_{self.train_size}.pt")
-                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt")
+                self.offshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_offshore_ch_{self.channels_off}_epoch_{self.couple_epochs[0]}_{self.train_size}.pt",map_location=self.device)
+                self.deform_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_deformfull_ch_{self.channels_deform}_epoch_{self.couple_epochs[1]}_{self.train_size}.pt",map_location=self.device)
+                self.onshore_model = torch.load(f"{self.MLDir}/model/{self.reg}/out/model_onshoreparts_ch_{self.channels_on}_epoch_{self.couple_epochs[2]}_{self.train_size}.pt",map_location=self.device)
 
         print(self.interface_layers)    
         # Initialize model
@@ -1108,10 +1107,10 @@ class BuildTsunamiAE():
         
             #overwrite epochs where val + test loss are the minimum and mark in plot below:
             if epoch == 0:
-                min_loss = avg_val_ls + avg_test_ls
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
                 min_epoch = epoch
-            elif avg_val_ls + avg_test_ls < min_loss:
-                min_loss = avg_val_ls + avg_test_ls
+            elif (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in)) < min_loss:
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
                 min_epoch = epoch
                 torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt')
             
@@ -1142,7 +1141,7 @@ class BuildTsunamiAE():
         ex.log_scalar(f'min_loss_{self.job}/', self.min_loss)
         ex.log_scalar(f'min_epoch_{self.job}/', self.min_epoch) 
 
-    @ex.capture
+    @ex.capture #build the direct encoder-decoder model without pretraining
     def fulltuneED(self,
             job,
             data_in, #training data offshore
@@ -1277,10 +1276,10 @@ class BuildTsunamiAE():
         
             #overwrite epochs where val + test loss are the minimum and mark in plot below:
             if epoch == 0:
-                min_loss = avg_val_ls + avg_test_ls
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
                 min_epoch = epoch
-            elif avg_val_ls + avg_test_ls < min_loss:
-                min_loss = avg_val_ls + avg_test_ls
+            elif (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in)) < min_loss:
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
                 min_epoch = epoch
                 torch.save(self.model, f'{self.MLDir}/model/{self.reg}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt')
             
@@ -1311,8 +1310,7 @@ class BuildTsunamiAE():
         ex.log_scalar(f'min_loss_{self.job}/', self.min_loss)
         ex.log_scalar(f'min_epoch_{self.job}/', self.min_epoch) 
 
-
-    @ex.capture   
+    @ex.capture   #also uses the reduced defomation data on inundation grids
     def evaluateAE(self,
                     data_in, #training data offshore
                     data_deform, #training data deformation
@@ -1599,9 +1597,8 @@ class BuildTsunamiAE():
 
         #save true_pred_er as csv
         true_pred_er.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.csv')
-
     
-    @ex.capture   
+    @ex.capture   #for direct model evaluation(without pretraining)
     def evaluateED(self,
                     data_in, #training data offshore
                     data_deformfull, #training data deformation
@@ -1626,12 +1623,14 @@ class BuildTsunamiAE():
         event_list_path = f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt'
         event_list = np.loadtxt(event_list_path, dtype='str')
         
-        #read model from file for testing
+        #read the direct no pretrain model from file for testing
         if epoch is None:
-            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_direct_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
+            print('using direct model without pretraining')
+            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_withdeform_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
         else:
-            model = torch.load(epoch,map_location=torch.device('cpu'))
-            # model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt',map_location=torch.device('cpu')) 
+            print('using direct model without pretraining with filepath as:',epoch)
+            model = torch.load(epoch,map_location=torch.device('cpu')) #hardcoded model name from epoch input
+            # model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_withdeform_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt',map_location=torch.device('cpu')) 
         model.eval()
 
         # print('model summary.....')
@@ -1657,7 +1656,7 @@ class BuildTsunamiAE():
             print(f"test loss: {test_loss / len(test_loader_in):.5f}")
 
         #save prediction as numpy array
-        np.save(f'{self.MLDir}/model/{self.reg}/out/pred_trainsize{self.train_size}_testsize{self.test_size}.npy', predic)
+        np.save(f'{self.MLDir}/model/{self.reg}/out/pred_trainsize{self.train_size}_testsize{self.test_size}_direct.npy', predic)
                        
         #first calculate location index of control points for given lat and lon
         locindices = get_idx_from_latlon(control_points)
@@ -1694,7 +1693,7 @@ class BuildTsunamiAE():
         eve_perf['id'] = event_list
 
         #save eve_perf as csv
-        eve_perf.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_eve_perf_testsize{self.test_size}.csv')
+        eve_perf.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_eve_perf_testsize{self.test_size}.csv')
 
         #combine columns of true,pred,er into 12 column array
         true_pred_er = np.column_stack((true_list,pred_list,er_list))
@@ -1775,9 +1774,9 @@ class BuildTsunamiAE():
         # Adjust layout and add a suptitle to the main plot
         plt.tight_layout()
         plt.suptitle(f"mseoverall: {mseoverall:.5f}, r2maxdepth: {r2maxdepth:.5f}, gfitoverall: {gfitoverall:.4f}, testsize: {self.test_size}", fontsize=16, y=0.02)
-        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')
         plt.clf()
-        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')        
+        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')        
 
         #plot error at each location
         print('plotting error at each control points')
@@ -1834,9 +1833,9 @@ class BuildTsunamiAE():
             axins.set_xlabel('True')
             axins.set_ylabel('Predicted')
             axins.set_aspect('equal', adjustable='box')
-        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
         plt.clf()
-        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
+        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
 
         #plot box plot for event performance using metric G
         table = eve_perf
@@ -1861,11 +1860,11 @@ class BuildTsunamiAE():
         plt.xlabel('Maximum offshore amplitude (m)', fontsize=15)
         plt.text(4, 0.3, f'Event Count by {bin_counts}', color='red')
         plt.title(f'G vs. max_off for {self.reg}', fontsize=15)
-        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
         plt.clf()
-        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_coupled_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
+        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_direct_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
         #save table
-        table.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_compile_testsize{self.test_size}.csv')
+        table.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_compile_testsize{self.test_size}.csv')
 
         #add column names as T1...P1...and E1...
         col_names = []
@@ -1881,10 +1880,293 @@ class BuildTsunamiAE():
         true_pred_er['id'] = event_list
 
         #save true_pred_er as csv
-        true_pred_er.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.csv')
+        true_pred_er.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_direct_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.csv')
 
+    @ex.capture   #for direct model evaluation(without pretraining)
+    def evaluateEDSingle(self,
+                    data_in, #training data offshore
+                    data_deformfull, #training data deformation
+                    data_out, #training data onshore
+                    channels_off = [64,128,256], #channels for offshore(1DCNN)
+                    channels_on = [64,64], #channels for onshore(fully connected)
+                    epoch =  None,#selected epoch
+                    batch_size = 1000, #depends on GPU memory
+                    control_points = [], #control points for evaluation
+                    threshold = 0.1, #threshold for evaluation
+                    device =  torch.device("cpu"),
+                    reg_gaugeno = None,
+                    ):
+        
+        self.job = 'evaluate'
+        self.batch_size = batch_size
+        self.channels_off = channels_off
+        self.channels_on = channels_on
+        self.device = device
+        
+        #read event list   
+        event_list_path = f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt'
+        event_list = np.loadtxt(event_list_path, dtype='str')
+        
+        #read the direct no pretrain model from file for testing
+        if epoch is None:
+            print('using single input direct model without pretraining')
+            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_nodeform_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
+        else:
+            print('using single input direct model without pretraining with filepath as:',epoch)
+            model = torch.load(epoch,map_location=torch.device('cpu')) #hardcoded model name from epoch input
+            # model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt',map_location=torch.device('cpu')) 
+        model.eval()
 
-    @ex.capture   
+        # print('model summary.....')
+        # print(summary(model,[(300,model_def[0],model_def[1]),(300,model_def[2],),(300,model_def[3],model_def[4])]))
+
+         #load dataloaders
+        test_loader_in = self.dataloader(data_in)
+        test_loader_deformfull = self.dataloader(data_deformfull)
+        test_loader_out = self.dataloader(data_out)
+        predic = np.zeros(data_out.shape)
+
+        # Test model
+        with torch.no_grad():
+            test_loss = 0
+            for batch_idx,(batch_data_in,batch_data_deformfull,batch_data_out) in enumerate(zip(test_loader_in,test_loader_deformfull,test_loader_out)):
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deformfull = batch_data_deformfull[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
+                recon_data = model(batch_data_in,batch_data_deformfull)
+                loss = self.criterion(recon_data, batch_data_out)
+                test_loss += loss.item()
+                predic[batch_idx*self.batch_size:(batch_idx+1)*self.batch_size] = recon_data.cpu().numpy()
+            print(f"test loss: {test_loss / len(test_loader_in):.5f}")
+
+        #save prediction as numpy array
+        np.save(f'{self.MLDir}/model/{self.reg}/out/pred_trainsize{self.train_size}_testsize{self.test_size}_nodeform.npy', predic)
+                       
+        #first calculate location index of control points for given lat and lon
+        locindices = get_idx_from_latlon(control_points)
+
+        #evaluation table
+        eve_perf = []
+        true_list = []
+        pred_list = []
+        er_list = []
+
+        #score  returns mse_val,r2_val, truecopy[locindices],pred[locindices],pt_er, Gfit_val,l2n_val #,Kcap,Ksmall
+        test_ids = np.loadtxt(f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt',dtype='str')
+        for eve_no,eve in enumerate(test_ids):
+            scores = calc_scores(data_out[eve_no,:], predic[eve_no,:],locindices,threshold)
+            eve_perf.append([scores[0],scores[1],scores[5],scores[6], #mse,r2,g,l2n
+                            np.count_nonzero(data_out[eve_no,:]), #true count
+                            np.count_nonzero(predic[eve_no,:]),#pred count
+                            np.max(data_out[eve_no,:]), #true max
+                            np.max(predic[eve_no,:]), #pred max
+                            ]) 
+            # mse_val,r2_val,pt_er,g_val,l2n_val,trueinundation,predinundation,
+            true_list.append(scores[2])
+            pred_list.append(scores[3])
+            er_list.append(scores[4])
+
+        #count of events less than 
+        eve_perf = np.array(eve_perf)
+        true_list = np.array(true_list)
+        pred_list = np.array(pred_list)
+        er_list = np.array(er_list)
+
+        #convert eve_perf to dataframe
+        eve_perf = pd.DataFrame(eve_perf,columns=['mse','r2','g','l2n','true','pred','truemax','predmax'])
+        eve_perf['id'] = event_list
+
+        #save eve_perf as csv
+        eve_perf.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_eve_perf_testsize{self.test_size}.csv')
+
+        #combine columns of true,pred,er into 12 column array
+        true_pred_er = np.column_stack((true_list,pred_list,er_list))
+
+        #print overall performance metrics for whole training exercise and evaluation work : 
+        # Plot results max height for all events
+        test_max = np.max(data_out,axis=(1))
+        recon_max = np.max(predic,axis=(1))
+
+        # Calculate mseoverall and r2maxdepth
+        r2maxdepth = r2_score(test_max, recon_max)
+        r2area = r2_score(eve_perf['true'], eve_perf['pred'])
+        mseoverall = mean_squared_error(data_out, predic)
+        gfitoverall = np.mean(Gfit(data_out, predic))
+        print(f"mseoverall: {mseoverall:.4f}")
+        print(f"r2maxdepth: {r2maxdepth:.3f}")
+        print(f"r2area: {r2area:.3f}")
+        print(f"gfitoverallmean: {gfitoverall:.3f}")
+        #TODO: add per event evaluation for discovery and analysis
+
+        #log metrics to sacred
+        ex.log_scalar('mseoverall',mseoverall)
+        ex.log_scalar('r2maxdepth',r2maxdepth)
+        ex.log_scalar('r2area',r2area)
+        ex.log_scalar('gfitoverall',gfitoverall)
+        
+        # Create a single figure with three axes
+        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+
+        # Plot scatter of flood count
+        scatter = ax[0].scatter(eve_perf['true'], eve_perf['pred'], s=1, c=eve_perf['g'], cmap='PiYG')
+        ax[0].plot([0, 1], [0, 1], transform=ax[0].transAxes, color='red')
+        ax[0].set_title(f"r^2: {r2area:.3f} for inundated pixel above 0.2 m")
+        plt.colorbar(scatter, ax=ax[0])
+        ax[0].set_aspect('equal', adjustable='box')
+        ax[0].set_xscale('log')
+        ax[0].set_yscale('log')
+        ax[0].set_xlim(10, 1000000)
+        ax[0].set_ylim(10, 1000000)
+        ax[0].grid()
+        ax[0].set_xlabel('True: Inundated pixel count')
+        ax[0].set_ylabel('Predicted: Inundated pixel count')
+
+        # Plot scatter of mse vs l2norm
+        scatter = ax[1].scatter(eve_perf['l2n'], eve_perf['mse'], s=1, c=eve_perf['g'], cmap='PiYG')
+        ax[1].plot([0, 1], [0, 1], transform=ax[1].transAxes, color='red')
+        plt.colorbar(scatter, ax=ax[1])
+        ax[1].set_title(f"L2 Error vs L2 Norm for inundated pixel above 0.2 m")
+        ax[1].set_aspect('equal', adjustable='box')
+        ax[1].set_xscale('log')
+        ax[1].set_yscale('log')
+        ax[1].set_xlim(.00001, 10)
+        ax[1].set_ylim(.00001, 10)
+        ax[1].grid()
+        ax[1].set_xlabel('L2 Norm')
+        ax[1].set_ylabel('L2 Error')
+
+        # Plot scatter of max depth for each event
+        # Calculate the point density
+        x = test_max
+        y = recon_max
+        xy = np.vstack([x,y])
+        z = gaussian_kde(xy)(xy)
+        index = z.argsort()
+        x, y, z = x[index], y[index], z[index]
+        scatter = ax[2].scatter(x, y, c=z, s=1)
+        ax[2].plot([0, 1], [0, 1], transform=ax[2].transAxes, color='red')
+        plt.colorbar(scatter, ax=ax[2])
+        ax[2].set_title("Max depth for each event")
+        ax[2].text(10, 5, f"R Squared: {r2maxdepth:.5f} ", fontsize=12)
+        ax[2].set_aspect('equal', adjustable='box')
+        ax[2].set_xlim(0, 20)
+        ax[2].set_ylim(0, 20)
+        ax[2].grid()
+        plt.xlabel('True:Max. inun. depth(m)')
+        plt.ylabel('Predicted:Max. inun. depth(m)')
+
+        # Adjust layout and add a suptitle to the main plot
+        plt.tight_layout()
+        plt.suptitle(f"mseoverall: {mseoverall:.5f}, r2maxdepth: {r2maxdepth:.5f}, gfitoverall: {gfitoverall:.4f}, testsize: {self.test_size}", fontsize=16, y=0.02)
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')
+        plt.clf()
+        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_maxdepth_testsize{self.test_size}.png')        
+
+        #plot error at each location
+        print('plotting error at each control points')
+        plt.figure(figsize=(15, 30))
+
+        #add to main plot the mse and r2 to the plot at the top
+        plt.suptitle(f"mseoverall: {mseoverall:.5f},r2maxdepth: {r2maxdepth:.5f}gfitoverall:{gfitoverall:.4f},testsize: {self.test_size}",fontsize=25)
+               
+        #error charts
+        plt.figure(figsize=(25, 30))
+        plt.suptitle(f"mseoverall: {mseoverall:.5f},r2maxdepth: {r2maxdepth:.5f}gfitoverall:{gfitoverall:.4f},testsize: {self.test_size}",fontsize=25)
+        for i in range(len(locindices)):
+            ax = plt.subplot(4, 3, i + 1)   
+            # Plot the histogram of errors for the control locations
+            plt.hist(er_list[er_list[:,i]!=0,i],bins=40,edgecolor='black',)
+            # Check if its empty
+            if len(er_list[er_list[:,i]!=0,i]) == 0:
+                continue
+            else:
+                quantiles = np.percentile(er_list[er_list[:,i]!=0,i], [5, 50, 95])
+                # Plot quantile lines
+                for q in quantiles:
+                    ax.axvline(q, color='red', linestyle='--', label=f'Q{int(q)}')
+                ax.set_xlim(-3, 3)
+            #calculate hit and mis for each location based on depth of true and prediction
+            #events crossing the threshold say 0.2 are considered flooded
+            neve = np.count_nonzero(true_pred_er[:,i]>threshold)
+            neve_recon = np.count_nonzero(true_pred_er[:,i+len(locindices)]>threshold)
+            print(f"Control Location:{i+1},No of flood events:{neve}/{len(true_pred_er[:,i])}")
+            if neve == 0:
+                TP = -999
+                FN = -999
+            else:
+            #true positive: true>0.2 and pred>0.2
+                TP = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+len(locindices)]>threshold))/(neve)
+                FN = np.count_nonzero((true_pred_er[:,i]>threshold) & (true_pred_er[:,i+len(locindices)]<=threshold))/(neve)
+            TN = np.count_nonzero((true_pred_er[:,i]<=threshold) & (true_pred_er[:,i+len(locindices)]<=threshold))/(len(true_pred_er[:,i])-neve)
+            FP = np.count_nonzero((true_pred_er[:,i]<=threshold) & (true_pred_er[:,i+len(locindices)]>threshold))/(len(true_pred_er[:,i])-neve)
+            plt.title(f"Control Location:{i+1},No of flood events:True#{neve}|Predicted#{neve_recon}",fontsize=15)
+            plt.text(0.8, 0.9, f" TP: {TP:.2f}, TN: {TN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=15)
+            plt.text(0.8, 0.75, f"FP: {FP:.2f}, FN: {FN:.2f}", horizontalalignment='center',verticalalignment='center', transform=plt.gca().transAxes,fontsize=15)
+            plt.xlabel('Error in max flood depth (m)',fontsize=15)
+            plt.ylabel('Count',fontsize=15)
+
+            # Create a new inset axis for the scatter plot
+            axins = inset_axes(ax, width="30%", height="30%", loc='upper left', borderpad=3)
+            
+            # Scatter plot of values (replace with your data)
+            axins.plot([0, 1], [0, 1], transform=axins.transAxes, color='blue',)
+            axins.scatter(true_pred_er[:,i], true_pred_er[:,i+len(locindices)], marker='o', color='red', label='Max Inun Depth',s=0.33)  # Customize marker and color as needed
+            axins.text(0.5,5,f'r^2:{r2_score(true_pred_er[:,i], true_pred_er[:,i+len(locindices)]):.2f}',fontsize=15)
+            axins.set_xlim(0, 6)  # Adjust x-axis limits for the scatter plot
+            axins.set_ylim(0, 6)  # Adjust y-axis limits for the scatter plot
+            axins.set_xlabel('True')
+            axins.set_ylabel('Predicted')
+            axins.set_aspect('equal', adjustable='box')
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
+        plt.clf()
+        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_error_testsize{self.test_size}.png')
+
+        #plot box plot for event performance using metric G
+        table = eve_perf
+
+        # Read sampling file and merge with 'table' based on 'id'
+        sampling_file = pd.read_csv(f'{self.MLDir}/data/info/sampling_input_{self.reg}_{reg_gaugeno}.csv')
+        table = table.merge(sampling_file, on='id', how='left')
+
+        # Set the bin edges for 'max_off' values
+        bin_edges = [0, 0.1, 0.3, 1, 2, 3, 99]  # Define your custom bin edges here
+
+        # Create a box plot of 'gfit_out' binned by 'max_off' using custom bin edges
+        plt.figure(figsize=(8, 4))
+        table['max_off_bin'] = pd.cut(table['max_off'], bin_edges)
+        table.boxplot(column='g', by='max_off_bin', vert=True, showfliers=True, widths=0.2, sym='k.', patch_artist=True, ax=plt.gca())
+
+        # Get bin counts
+        bin_counts = table.groupby('max_off_bin').size()
+
+        # Set labels and titles
+        plt.ylabel('Goodness of fit (G)', fontsize=15)
+        plt.xlabel('Maximum offshore amplitude (m)', fontsize=15)
+        plt.text(4, 0.3, f'Event Count by {bin_counts}', color='red')
+        plt.title(f'G vs. max_off for {self.reg}', fontsize=15)
+        plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
+        plt.clf()
+        ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/model_nodeform_off{channels_off}_on{channels_on}_{self.train_size}_gfit_testsize{self.test_size}.png')
+        #save table
+        table.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_compile_testsize{self.test_size}.csv')
+
+        #add column names as T1...P1...and E1...
+        col_names = []
+        for i in range(len(control_points)):
+            col_names.append(f'T{i+1}')
+        for i in range(len(control_points)):
+            col_names.append(f'P{i+1}')
+        for i in range(len(control_points)):
+            col_names.append(f'E{i+1}')
+            
+        #convert to dataframe
+        true_pred_er = pd.DataFrame(true_pred_er,columns=col_names)
+        true_pred_er['id'] = event_list
+
+        #save true_pred_er as csv
+        true_pred_er.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_nodeform_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.csv')
+
+    @ex.capture   #reads postprocessed prediction and saves evaluation to results folder
     def evaluatePredic(self,
                     data_out, #training data onshore
                     channels_off = [64,128,256], #channels for offshore(1DCNN)
@@ -2155,7 +2437,6 @@ def calc_scores(true,pred,locindices,threshold=0.2):
     # Kcap = np.exp(logK)
     # Ksmall = np.exp(logksmall)
     return mse_val,r2_val,truecopy[locindices],pred[locindices],pt_er,Gfit_val,l2n_val#,Kcap,Ksmall
-
 
 def Gfit(obs, pred): #a normalized least-squares per event in first dimensions
     # print('obs shape', obs.shape,obs.shape[0])
