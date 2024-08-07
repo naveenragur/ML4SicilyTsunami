@@ -18,6 +18,8 @@ data/simu/*
 *tar.gz
 
 resources/processed/eve_rate/*
+resources/gis/bathy/*
+resources/gis/dtopo/*.asc
 
 scripts/Catania/__pycache__/*
 scripts/Catania/.neptune/*

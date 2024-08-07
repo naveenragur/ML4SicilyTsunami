@@ -48,7 +48,20 @@ if mode == 'reprocess':
         onshore_map[:] = empty_model_out[:]
 
         print(f'Onshore data for test size {test_size} saved with events {empty_model_out.shape[0]} and locations {empty_model_out.shape[1]}')
+elif mode == 'reprocess_direct':
+    for test_size in ['0','1','2','3']:
+        #read postprocessed data
+        empty_model_out = np.load(f'{MLDir}/model/{reg}/out/postprocessed_trainsize{train_size}_testsize{test_size}.npy')
 
+        #save as memap file like reduced onshore depths in preprocessing
+        onshore_map = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{test_size}_{train_size}_prediction.dat',
+                                mode='w+',
+                                dtype=float,
+                                shape=(empty_model_out.shape[0], empty_model_out.shape[1]))
+
+        onshore_map[:] = empty_model_out[:]
+
+        print(f'Onshore data for test size {test_size} saved with events {empty_model_out.shape[0]} and locations {empty_model_out.shape[1]}')
 else:
     print('Error: Invalid mode')
 

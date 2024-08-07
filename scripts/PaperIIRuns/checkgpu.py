@@ -1,5 +1,6 @@
 import pynvml as pynvml
 import psutil
+import torch
 
 def check_gpu_usage(process_exceptions=['Xorg'], user_exceptions=['bla123'], min_memory=5, base_on_memory=True, base_on_process=True):
     # Process exceptions -> we don't care about such procs
@@ -49,3 +50,6 @@ def check_gpu_usage(process_exceptions=['Xorg'], user_exceptions=['bla123'], min
 if __name__ == "__main__":
     print(check_gpu_usage())
     
+    print(torch.cuda.is_available())
+    print(torch.cuda.current_device())
+    print(torch.cuda.device_count())

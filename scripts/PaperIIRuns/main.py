@@ -74,16 +74,27 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     #               data_out=red_d_array,
     #               n = nflood_grids,
     #               batch_size = batch_size_deform,
-    #               nepochs = 200)
+    #               nepochs = 300)
 
     # AE.fulltuneED(
+    #             job = 'withdeform', #nodeform or withdeform
     #             data_in=t_array,
     #             data_deformfull=dZ_array,
     #             data_out=red_d_array,
     #             n = nflood_grids,
     #             parts = parts,
     #             batch_size = batch_size_deform,
-    #             nepochs = 2000)
+    #             nepochs = 1000)
+    
+    AE.fulltuneED(
+                job = 'nodeform', #nodeform or withdeform
+                data_in=t_array,
+                data_deformfull=dZ_array,
+                data_out=red_d_array,
+                n = nflood_grids,
+                parts = parts,
+                batch_size = batch_size_deform,
+                nepochs = 2000)
     
 #     del t_array, red_d_array, red_dZ_array, dZ_array
 #     del event_list, event_list_path, flood_mask, nflood_grids, n_eve
@@ -108,7 +119,7 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
 #     #MCE - 27
 
 #     AE.evaluateAE(data_in=t_array,
-#                   data_deform=red_d_array,
+#                   data_deform=red_dZ_array,
 #                   data_deformfull=dZ_array,
 #                   data_out=red_d_array,
 #                   batch_size = 1000,
