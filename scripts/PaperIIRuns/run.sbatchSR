@@ -1,11 +1,11 @@
 #!/bin/bash
 #options for sbatch
 #SBATCH --account=PR_carisma
-#SBATCH --job-name=SR_calc # Job name
-#SBATCH --time=0-12:00 # time limit (D-HH:MM)
+#SBATCH --job-name=SR_comp # Job name
+#SBATCH --time=0-24:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn08
+#SBATCH --nodelist=cn04
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -32,7 +32,6 @@ split=$5
 # loading modules or conda
 source /home/${USER}/.bash_profile # loading bash_proi
 conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
-# conda activate rioxarray_env
 
 # running commands
 cd $MLDir/scripts/PaperIIRuns
@@ -168,11 +167,14 @@ cd $MLDir/scripts/PaperIIRuns
 # python 05_calcPerfGrid.py SR testfile 1773 961
 
 #For comparison plots
+conda deactivate
+conda activate rioxarray_env
 # python 06_compare_depths.py SR compare_pygmt 1773 961
+python 06_compare_depths.py SR compare 1773 961
 
-#For plotting PTHA maps for true and pred depths
-python 07_calcPTHA.py SR PTHA_rate 1773 961
-python 07_calcPTHA.py SR emulator_rate 1773 961
+# #For plotting PTHA maps for true and pred depths
+# python 07_calcPTHA.py SR PTHA_rate 1773 961
+# python 07_calcPTHA.py SR emulator_rate 1773 961
 
 # finished commands
 echo ...........
