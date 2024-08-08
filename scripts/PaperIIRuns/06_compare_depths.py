@@ -248,7 +248,7 @@ if mode == 'compare':
         cbar2.set_label('Error(m)', fontsize=12)
         cbar3.set_label('Local Deform.(m)', fontsize=12)
         plt.tight_layout()
-        plt.savefig(f'{MLDir}/model/{reg}/compare/Compare_TPE_{train_size}_{reg}_{str(eve)}.png',
+        plt.savefig(f'{MLDir}/model/{reg}/compare/{id}_{train_size}_{reg}_{str(eve)}.png',
                     dpi=100, bbox_inches='tight', pad_inches=0.1)
         #close figure
         plt.close(fig)

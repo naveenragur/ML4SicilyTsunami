@@ -5,7 +5,7 @@
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn03
+#SBATCH --nodelist=cn05
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
