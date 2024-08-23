@@ -104,7 +104,7 @@ index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.t
 index_map.columns = ['m','n','lat','lon'] #add column names
 
 if mode == 'compare':
-    for id in eve_id:
+    for id in ids:
         eve = np.where(eve_id==id)[0][0]
         print(id,'\n',eve)
         # eve=32145

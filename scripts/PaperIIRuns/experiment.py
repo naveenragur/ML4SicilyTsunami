@@ -52,7 +52,6 @@ def config():
     # offshore_threshold = 0.1
     # onshore_threshold = 0.25
 
-    
     # Define the region and data size parameters
     reg = "CT" #CT or SR
     train_size = "9999" #eventset size for training & building the model
@@ -124,7 +123,7 @@ def config():
 
     # Define the number of layers to be tuned
     interface_layers = 2 #no of layers in the interface between encoder and decoder
-    tune_nlayers = 1 #last n layer of encoder and first layer of decoder are also tunable
+    tune_nlayers = 2 #last n layer of encoder and first layer of decoder are also tunable
 
     #for reading data
     windowthreshold = 0.1
@@ -398,7 +397,7 @@ class Autoencoder_deformationf(nn.Module):
         # print(x.shape)
         x = x.squeeze(1) #remove channel dimension #batch x 1 x xdim x ydim -> batch x xdim x ydim
         return x
-  
+
 #build the coupled model
 class Autoencoder_coupled2(nn.Module):
     def __init__(self,
@@ -505,8 +504,134 @@ class Autoencoder_coupled2(nn.Module):
         predicted_y = torch.cat(decoded_splits, dim=1) #600k/parts to 600k
         predicted_y = predicted_y[:, :self.xy] #crop to original size
         return predicted_y
-    
-class EncoderDecoder(nn.Module):
+
+# #build the coupled model
+class Autoencoder_coupled3(nn.Module): #only pretrained encoders
+    def __init__(self,
+                offshore_model,
+                onshore_model,
+                deform_model,
+                interface_layers,
+                tune_nlayers,
+                parts,
+                xy):
+        super(Autoencoder_coupled3, self).__init__()
+
+        self.parts = parts
+        self.xy = xy
+        self.split_size = (xy // parts)+1
+
+        # Pretrained offshore 
+        self.offshore_encoder = offshore_model.encoder
+        for i, layer in enumerate(self.offshore_encoder): #first n layers are frozen and rest free
+                for param in layer.parameters(): #first layers are frozen
+                    param.requires_grad = False
+
+        self.offshore_fc1 = offshore_model.fc1
+        for i, layer in enumerate(self.offshore_fc1):
+                for param in layer.parameters(): #FC layer is tunable
+                    param.requires_grad = True
+
+        # Pretrained deform 
+        self.deform_encoder = deform_model.encoder
+        for i, layer in enumerate(self.deform_encoder): 
+            for param in layer.parameters(): #first layers are frozen
+                param.requires_grad = False
+
+        self.deform_fc1 = deform_model.fc1
+        for i, layer in enumerate(self.deform_fc1):
+                for param in layer.parameters(): # last layer is tunable
+                    param.requires_grad = True
+             
+        # Pretrained onshore model
+        self.onshore_global_decoder = onshore_model.global_decoder 
+        for i, layer in enumerate(self.onshore_global_decoder):
+            if i <= tune_nlayers:
+                for param in layer.parameters(): #first layer is tunable
+                    param.requires_grad = False
+            else:
+                for param in layer.parameters(): #second layer is frozen
+                    param.requires_grad = True
+        
+        # self.onshore_split_decoders = onshore_model.decoders
+        # #freeze all decoder layers in the onshore_split_decoders 
+        # for i, decoder in enumerate(self.onshore_split_decoders):
+        #     for param in decoder.parameters():
+        #         param.requires_grad = False #final model head decoder is frozen
+
+        #untrained        
+        # self.onshore_global_decoder = nn.Sequential(
+        #     nn.LazyLinear(128),
+        #     nn.LeakyReLU(negative_slope=0.01, inplace=True),
+        #     nn.LazyLinear(128),
+        #     nn.LeakyReLU(negative_slope=0.01, inplace=True),
+        #     nn.LazyLinear(16*parts),
+        #     nn.LeakyReLU(negative_slope=0.01, inplace=True),
+        # )
+
+        self.onshore_split_decoders = nn.ModuleList()
+        for i in range(parts):
+            decoder = nn.Sequential(
+                nn.LazyLinear(self.split_size),
+                nn.LeakyReLU(negative_slope=0.01, inplace=True),
+            )
+            self.onshore_split_decoders.append(decoder)
+
+        # Interface is tunable
+        self.interface_layers = interface_layers
+        if self.interface_layers == 1:
+            self.connect = nn.Sequential(
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+            ) 
+        elif self.interface_layers == 2:    
+            self.connect = nn.Sequential(
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+                                nn.LazyLinear(128),
+                                nn.LeakyReLU(inplace=True),
+            )
+
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, x, dz_red, dz_raw): #dz_red is the reduced deformation data not used for any bias correction or skip connection as originally intended
+
+        #encode offshore time series to latent space
+        x = self.offshore_encoder(x)  #3 layers of CNN
+        x = self.offshore_fc1(x) #flatten and linear layer 64 latent space
+
+        # #encode deformation to latent space
+        dz = dz_raw.unsqueeze(1) #add channel dimension
+        dz = self.deform_encoder(dz) #4 layers of CNN
+        dz = self.deform_fc1(dz) #flatten and linear layer 64 latent space
+        dz = dz.squeeze(1) #remove channel dimension
+
+        # #common latent space from from encoders
+        z = torch.cat((x, dz), dim=1) #with concat converts to 128 latent space
+        z = self.dropout(z) #lets say all the latent space is not useful for inundaiton prediction
+           
+        #retuning to transform onshore latent space
+        if self.interface_layers > 0: #linear layer 
+            z = self.connect(x)
+        
+        #decode to onshore global intermediate latent space
+        global_decoded = self.onshore_global_decoder(z) #16*64=1024
+
+        # Split the combined decoded latent
+        split_global_decoded = torch.chunk(global_decoded, self.parts, dim=1) #z[0]*parts 
+
+        # Decode each split independently
+        decoded_splits = []
+        for i in range(self.parts): #z[0]*parts to 600k/parts
+            decoded_split = self.onshore_split_decoders[i](split_global_decoded[i])
+            decoded_splits.append(decoded_split)
+
+        # Concatenate the decoded parts
+        predicted_y = torch.cat(decoded_splits, dim=1) #600k/parts to 600k
+        predicted_y = predicted_y[:, :self.xy] #crop to original size
+        return predicted_y
+
+class EncoderDecoder(nn.Module): #Model without pretraining
     def __init__(self,
                 x, #input wave data
                 y, #output depth data
@@ -621,7 +746,7 @@ class EncoderDecoder(nn.Module):
         y = y[:, :self.xy] #crop to original size
         return y
     
-class EncoderDecoderSingle(nn.Module):
+class EncoderDecoderSingle(nn.Module): #Model without pretraining using only offshore input
     def __init__(self,
                 x,
                 y,
@@ -803,7 +928,7 @@ class BuildTsunamiAE():
             plt.xlabel("Epoch")
             plt.ylabel("Loss")
             plt.yscale('log')
-            if self.job == 'couple':
+            if self.job == 'couple' or self.job == 'couple_test' or self.job == 'coupled':
                 plt.savefig(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
                 ex.add_artifact(f'{self.MLDir}/model/{self.reg}/plot/{self.job}_loss_off{self.channels_off}_on{self.channels_on}_{self.train_size}.png')
             elif self.job == 'withdeform' or self.job == 'nodeform':
@@ -1005,7 +1130,7 @@ class BuildTsunamiAE():
         self.tune_nlayers = tune_nlayers
         self.parts = parts
         self.xy = n
-        self.job = 'couple'
+        self.job = 'coupled'
 
         #load model
         if self.off_size != '9999' and self.deform_size != '9999':
@@ -1029,7 +1154,7 @@ class BuildTsunamiAE():
 
         print(self.interface_layers)    
         # Initialize model
-        self.model = Autoencoder_coupled2(self.offshore_model,
+        self.model = Autoencoder_coupled3(self.offshore_model,
                                          self.onshore_model, 
                                          self.deform_model,
                                          self.interface_layers,
@@ -1338,7 +1463,7 @@ class BuildTsunamiAE():
         
         #read model from file for testing
         if epoch is None:
-            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
+            model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt',map_location=torch.device('cpu'))
         else:
             model = torch.load(epoch,map_location=torch.device('cpu'))
             # model = torch.load(f'{self.MLDir}/model/{self.reg}/out/model_couple_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt',map_location=torch.device('cpu')) 
@@ -1597,7 +1722,6 @@ class BuildTsunamiAE():
 
         #save true_pred_er as csv
         true_pred_er.to_csv(f'{self.MLDir}/model/{self.reg}/out/model_coupled_off{self.channels_off}_on{self.channels_on}_{self.train_size}_true_pred_er_testsize{self.test_size}.csv')
-    
     @ex.capture   #for direct model evaluation(without pretraining)
     def evaluateED(self,
                     data_in, #training data offshore

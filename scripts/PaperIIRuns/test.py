@@ -87,7 +87,7 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     
 
     
-    # #before post process, after training
+    # #before post process, after training pretrained model
     AE.evaluateAE(data_in=t_array,
                   data_deform=red_dZ_array,
                   data_deformfull=dZ_array,
