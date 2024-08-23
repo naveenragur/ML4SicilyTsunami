@@ -3,12 +3,12 @@
 #SBATCH --account=PR_carisma
 #SBATCH --job-name=SR_comp # Job name
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
-#SBATCH --nodes=1 # number of nodes
-#SBATCH --partition=cpuq
-#SBATCH --nodelist=cn04
-# #SBATCH -p gpuq # partition
-# #SBATCH --gres=gpu:1 # number of GPUs
-# #SBATCH --nodelist=gp02
+# # SBATCH --nodes=1 # number of nodes
+# # SBATCH --partition=cpuq
+# # SBATCH --nodelist=cn04
+#SBATCH -p gpuq # partition
+#SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=gp01
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 # #SBATCH --array=12-15%4 # number of jobs to run
@@ -37,9 +37,9 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 cd $MLDir/scripts/PaperIIRuns
 
 #quick commands
-# export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=3
 # python checkgpu.py
-# nvidia-smi
+nvidia-smi
 
 # echo 'Running 01_preprocess.py' 
 # python 01_preprocess.py SR 961 train 961 #min first set
@@ -113,6 +113,7 @@ cd $MLDir/scripts/PaperIIRuns
 # python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=2' #evaluate
 # python test.py with 'reg=SR' 'train_size=6941' 'mask_size=961' 'test_size=3' #evaluate
 
+######NOT USED##########
 #post process
 # Define arrays for train sizes and test sizes
 # region=SR
@@ -120,29 +121,22 @@ cd $MLDir/scripts/PaperIIRuns
 # masksize=961
 # train_sizes=(961 1773 3669 6941)
 # test_sizes=(0 1 2 3)
-
 # # Calculate index for train_size and test_size based on SLURM_ARRAY_TASK_ID
 # train_index=$((SLURM_ARRAY_TASK_ID / 4))
 # test_index=$((SLURM_ARRAY_TASK_ID % 4))
-
 # train_size=${train_sizes[$train_index]}
 # test_size=${test_sizes[$test_index]}
-
 # echo "Running 02_postprocess.py for test size: $test_size and train size: $train_size" 
 # python 02_postprocess.py $region $test_size $mode $train_size $masksize
-
 #evaluation of post processed results
 # echo "Running final evaluation with postprocessed prediction for test size: $test_size and train size: $train_size" 
 # python test.py with "reg=$region" "train_size=$train_size" "mask_size=$masksize" "test_size=$test_size"
-
-######NOT USED##########
 #reprocess the results to a single binary file
 # echo "Reprocessing the results to a single binary file for train size"
 # # python 03_reprocess.py SR reprocess 961
 # # python 03_reprocess.py SR reprocess 1773
 # python 03_reprocess.py SR reprocess 3669
 # python 03_reprocess.py SR reprocess 6941
-
 # PTHA calculation
 # echo "PTHA processing for all grids"
 # python 04_calcPTHA.py SR PTHA 961 961
@@ -150,31 +144,27 @@ cd $MLDir/scripts/PaperIIRuns
 # python 04_calcPTHA.py SR PTHA 3669 961
 # python 04_calcPTHA.py SR PTHA 6941 961
 
-#For combining into single depths file for all test sets
+# #compile results to a single npy file of int 16 with cm values
+# echo "processing for all grids, all events into a single file"
 # python 04_compile_depths.py SR compile 1773 961
 
 #Grid calculation
-# echo "Performance calculation for all grids"
-# python 05_calcPerfGrid.py SR Grid 961 961
-# python 05_calcPerfGrid.py SR Grid 1773 961
-# python 05_calcPerfGrid.py SR Grid 3669 961
-# python 05_calcPerfGrid.py SR Grid 6941 961
-
+echo "Performance calculation for all grids"
+python 05_calcPerfGrid.py SR Grid 1773 961
 #For misfit plot
-# python 05_calcPerfGrid.py SR misfit 1773 961
-
+python 05_calcPerfGrid.py SR misfit 1773 961
 #For comparison with paper1(PS only and weighted calculation)
-# python 05_calcPerfGrid.py SR testfile 1773 961
+python 05_calcPerfGrid.py SR testfile 1773 961
+
+# #For plotting PTHA maps for true and pred depths
+python 07_calcPTHA.py SR PTHA_rate 1773 961
+python 07_calcPTHA.py SR emulator_rate 1773 961
 
 #For comparison plots
 conda deactivate
 conda activate rioxarray_env
-# python 06_compare_depths.py SR compare_pygmt 1773 961
-python 06_compare_depths.py SR compare 1773 961
-
-# #For plotting PTHA maps for true and pred depths
-# python 07_calcPTHA.py SR PTHA_rate 1773 961
-# python 07_calcPTHA.py SR emulator_rate 1773 961
+python 06_compare_depths.py SR compare_pygmt 1773 961
+# python 06_compare_depths.py SR compare 1773 961
 
 # finished commands
 echo ...........

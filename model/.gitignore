@@ -2,6 +2,7 @@ CT/out/*.pt
 CT/out/*.npy
 CT/compare/*
 CT/PTHA/*
+CT/test/*
 
 SR/out/*.pt
 SR/out/*.npy

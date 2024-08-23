@@ -68,7 +68,7 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     #            batch_size = batch_size_on,
     #            nepochs = 300)
 
-    AE.finetuneAE(data_in=t_array,
+    AE.finetuneAE(data_in=t_array, #pretrained model
                   data_deform=red_d_array,
                   data_deformfull=dZ_array,
                   data_out=red_d_array,
