@@ -5,7 +5,7 @@
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
 #SBATCH --nodes=1 # number of nodes
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn06
+#SBATCH --nodelist=cn08
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -37,9 +37,10 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 cd $MLDir/scripts/PaperIIRuns
 
 #quick commands
-export CUDA_VISIBLE_DEVICES=3
-# python checkgpu.py
-nvidia-smi
+cat /proc/cpuinfo 
+# export CUDA_VISIBLE_DEVICES=3
+# # python checkgpu.py
+# nvidia-smi
 
 #processing the data to memmap files
 # echo 'Running 01_preprocess.py' 
@@ -156,7 +157,7 @@ nvidia-smi
 # python 07_calcPTHA.py CT PTHA_rate 1658 892
 # python 07_calcPTHA.py CT emulator_rate 1658 892 
 
-# #For comparison plots
+#For comparison plots
 # conda deactivate
 # conda activate rioxarray_env
 # python 06_compare_depths.py CT compare_pygmt 1658 892

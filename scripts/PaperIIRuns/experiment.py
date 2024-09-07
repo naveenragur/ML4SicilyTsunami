@@ -548,10 +548,10 @@ class Autoencoder_coupled3(nn.Module): #only pretrained encoders
         for i, layer in enumerate(self.onshore_global_decoder):
             if i <= tune_nlayers:
                 for param in layer.parameters(): #first layer is tunable
-                    param.requires_grad = False
+                    param.requires_grad = True
             else:
                 for param in layer.parameters(): #second layer is frozen
-                    param.requires_grad = True
+                    param.requires_grad = False
         
         # self.onshore_split_decoders = onshore_model.decoders
         # #freeze all decoder layers in the onshore_split_decoders 
@@ -826,7 +826,7 @@ class EncoderDecoderSingle(nn.Module): #Model without pretraining using only off
             nn.LazyLinear(zlist[0]*parts),
             nn.LeakyReLU(negative_slope=0.01, inplace=True),
         )
-
+        #untrained new decoder modules
         self.onshore_split_decoders = nn.ModuleList()
         for i in range(parts):
             decoder = nn.Sequential(
