@@ -3,7 +3,6 @@
 This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a time-series input. We introduce a novel form of training such emulators with pretraining and fine-tuning.
 
 <img src="/resources/plots/P1b.png" alt="Model Training Approach" height="400">
-<img src="/resources/plots/EDArch.png" alt="Model Training Approach" height="400">
 
 ## Simulation Data
 <img src="/resources/plots/P1a.png" alt="Model Region" height="400">
@@ -33,6 +32,7 @@ The ML model is trained using simulation data provided by INGV and NGI for Easte
 - **interactive** additional notebooks useful for other file processing and handling in the project
 
 ## Usage
+<img src="/resources/plots/EDArch.png" alt="Model Training Approach" height="400">
 - The project uses python, with experiments tracked with sacred tool and neptune for tracking and logging machine learning runs.
 - Create a conda env using yml files provided in **configs** folder
 - Download processed simulation files available in zenodo link:
