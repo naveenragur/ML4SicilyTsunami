@@ -1,4 +1,5 @@
 # Tsunami Onshore Hazard Prediction using Machine Learning
+checking changes in the readme file
 
 This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a timeseries input.
 
