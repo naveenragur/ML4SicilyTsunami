@@ -1,13 +1,41 @@
 # Tsunami Onshore Hazard Prediction using Machine Learning
 
-This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a timeseries input.
+This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a timeseries input. We introduce a novel form of training such emulators with pretraining and fine-tuning.
+<img src="/resources/plots/P1b.png" alt="Model Training Approach" height="400">
+<img src="/resources/plots/EDArch.png" alt="Model Training Approach" height="400">
 
 ## Simulation Data
+<img src="/resources/plots/P1a.png" alt="Model Region" height="400">
 
 The ML model is trained using simulation data provided by INGV and NGI for Eastern Sicily, with a focus on Catania and Siracusa. The dataset consists of 53550 events, and you can view the event details and data through the following HTML maps:
 
 (Click the "Download Raw" button at the link to download the file, its html files created with folium)
-- [Events Map Explorer](/resources/gis/html/map_events.html) 
+- [Events Map Explorer](/resources/gis/html/map_events.html)
+
+- Processed training data can be found here - zenodo link
+
+## Contents
+### configs
+- YAML files with information on the Python packages and requirements to run
+### data
+- **events** contains folders on the events used for training, testing
+- **simu** raw simulation data is stored here
+- **processed** numpy binary files processed for fast read and write during experiments
+### model
+- **CT** folder with model outputs and plots used for Catania test site
+- **SR** folder with model outputs and plots used for Siracusa test site
+### resources
+- background information generated or used in the experiments for reference
+### scripts
+- **PaperIIPlots** contains notebooks and figures generated for the manuscript
+- **PaperIIPlots** contains notebooks, scripts for ml experiments discussed in the manuscript 
+- **interactive** additional notebooks useful for other file processing and handling in the project
+
+## Usage
+- The project uses python, with experiments tracked with sacred tool and neptune for tracking and logging machine learning runs.
+- Create a conda env using yml files provided in **configs** folder
+- Download processed simulation files available in zenodo link:
+- Use notebooks and code available in **scripts/** to run experiments, workflow described below
 
 ## Workflow
 
@@ -45,3 +73,15 @@ The workflow for this project is as follows:
 5. Model Application
    - The results are used to generate PTHA inundation maps for the regions of interest.
    - The results are compared with HPC based results for a full ptha eventset, subset considering events that cause local deformation and events that dont cause any local deformation.
+     <img src="/resources/plots/P5d.png" alt="PTHA Inundation Maps(HPC vs ML)" height="400">
+  
+## Useful References and Projects
+- Storrøsten 2024 - [Machine Learning Emulation of High Resolution Inundation Maps, Geophysical Journal International](https://doi.org/10.1093/gji/ggae151)
+- Ragu Ramalingam 2024 - [Advancing nearshore and onshore tsunami hazard approximation with machine learning surrogates](https://doi.org/10.5194/nhess-2024-72)
+- Gibbons 2020 - [Probabilistic Tsunami Hazard Analysis: High Performance Computing for Massive Scale Inundation Simulations](https://doi.org/10.3389/feart.2020.591549)
+
+## Useful Github Projects
+- [Tsunami Waveform and Inundation Emulator with Uncertainity](https://github.com/naveenragur/tsunami-surrogates.git) - A ML project for approximating tsunami wave height time series nearshore and maximum inundation depth onshore for the Japan Tohoku region, developed in Python/Pytorch.
+- [Tsunami Inundation Emulator](https://github.com/norwegian-geotechnical-institute/tsunami-inundation-emulator.git) - A project for tsunami inundation depth prediction using machine learning, developed in Julia/Flex.
+
+
