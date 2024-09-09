@@ -1,21 +1,18 @@
 .neptune
 **/sacred_logs/
 **/sbatch_logs/
+*.tar
+*tar.gz
 
-data/events/shuffled*
-data/events/test*
-data/events/train*
+#data/events/shuffled*
+#data/events/test*
+#data/events/train*
 data/events/old/*
 data/events/PostNGI/*
 data/events/Rome/*
-
 data/processed/*.dat
 data/processed/*.npy
-
 data/simu/*
-
-*.tar
-*tar.gz
 
 resources/processed/eve_rate/*
 resources/gis/bathy/*

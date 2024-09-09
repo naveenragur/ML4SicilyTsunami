@@ -1,3 +1,4 @@
+#example with inbuilt variables
 name: pytorch
 channels:
   - conda-forge
