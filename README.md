@@ -74,7 +74,8 @@ The workflow for this project is as follows:
 5. Model Application
    - The results are used to generate PTHA inundation maps for the regions of interest.
    - The results are compared with HPC based results for a full ptha eventset, subset considering events that cause local deformation and events that dont cause any local deformation.
-     <img src="/resources/plots/P5d.png" alt="PTHA Inundation Maps(HPC vs ML)" height="400">
+
+<img src="/resources/plots/P5d.png" alt="PTHA Inundation Maps(HPC vs ML)" height="800">
   
 ## Useful References and Projects
 - Storrøsten 2024 - [Machine Learning Emulation of High Resolution Inundation Maps, Geophysical Journal International](https://doi.org/10.1093/gji/ggae151)
