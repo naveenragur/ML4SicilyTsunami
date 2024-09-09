@@ -1,3 +1,4 @@
+#for pygmt plotting
 name: pygmt
 channels:
   - conda-forge
