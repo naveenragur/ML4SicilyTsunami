@@ -1,6 +1,4 @@
-6734 - BS + PS mix events for offshore encoders
-6421 - Deformation only events
-6317 - BS + PS mix events for offshore encoder 
-3200 - PS Hellenic source used in WC
-2500 - events without deformation
-0-3 - test events
+892,1658,3454,7071 - training sizes for Catania
+961,1773,3669,6941 - training sizes for Siracusa
+7929 for location deformation AE training for Catania
+9186 for location deformation AE training for Siracusa
