@@ -1,6 +1,6 @@
 # Tsunami Onshore Hazard Prediction using Machine Learning
 
-This Git project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a time-series input. We introduce a novel form of training such emulators with pretraining and fine-tuning.
+This github project tracks the work related to the use of machine learning (ML) for tsunami onshore hazard prediction. The goal is to develop a surrogate model that can be linked with a regional offshore tsunami model, using offshore wave amplitude as a time-series input. We introduce a novel form of training such emulators with pretraining and fine-tuning.
 
 <img src="/resources/plots/P1b.png" alt="Model Training Approach" height="400">
 
@@ -13,9 +13,9 @@ The ML model is trained using simulation data provided by INGV and NGI for Easte
 - [Events Map Explorer](/resources/gis/html/map_events.html)
 
 The dataset is archived at main Zenodo link: [https://doi.org/10.5281/zenodo.13738078](https://doi.org/10.5281/zenodo.13738078) with three parts as below.
-- https://doi.org/10.5281/zenodo.13738078(Part 1) - Training Dataset and Model Checkpoints
-- https://doi.org/10.5281/zenodo.13741284(Part 2) - Testing Dataset
-- https://doi.org/10.5281/zenodo.13741058(Part 3) - Processed Inundation Depth Files in cm (Simulation and Emulation)
+- https://doi.org/10.5281/zenodo.13738078(Part1) - Training Dataset and Model Checkpoints
+- https://doi.org/10.5281/zenodo.13741284(Part2) - Testing Dataset
+- https://doi.org/10.5281/zenodo.13741058(Part3) - Processed Inundation Depth Files in cm (Simulation and Emulation)
 
 ## Contents
 ### configs
