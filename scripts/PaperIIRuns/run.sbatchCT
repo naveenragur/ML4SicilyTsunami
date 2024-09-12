@@ -1,9 +1,10 @@
 #!/bin/bash
 #options for sbatch
 #SBATCH --account=PR_carisma
-#SBATCH --job-name=CT_comp # Job name
+#SBATCH --job-name=CT_depth # Job name
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
-#SBATCH --nodes=1 # number of nodes
+#SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
+#SBATCH --cpus-per-task=1 # number of CPU cores per task
 #SBATCH --partition=cpuq
 #SBATCH --nodelist=cn07
 # #SBATCH -p gpuq # partition
@@ -11,7 +12,7 @@
 # #SBATCH --nodelist=gp02
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
-# #SBATCH --array=12-15%4 # number of jobs to run
+
 
 # for calculating the amount of time the job takes
 begin=`date +%s`
@@ -143,7 +144,10 @@ cd $MLDir/scripts/PaperIIRuns
 
 # #compile results to a single npy file of int 16 with cm values
 # echo "processing for all grids, all events into a single file"
-# python 04_compile_depths.py CT compile 1658 892
+# python 04_compile_depths.py CT compile 892 892
+# # python 04_compile_depths.py CT compile 1658 892
+# python 04_compile_depths.py CT compile 3454 892
+# python 04_compile_depths.py CT compile 7071 892
 
 # # #Grid calculation
 # # echo "Performance calculation for all grids"
@@ -158,10 +162,11 @@ cd $MLDir/scripts/PaperIIRuns
 # python 07_calcPTHA.py CT emulator_rate 1658 892 
 
 #For comparison plots
-# conda deactivate
-# conda activate rioxarray_env
+conda deactivate
+conda activate rioxarray_env
 # python 06_compare_depths.py CT compare_pygmt 1658 892
-# # python 06_compare_depths.py CT compare 1658 892
+
+python 06_compare_depths.py CT compare 1658 892 0
 
 
 # finished commands

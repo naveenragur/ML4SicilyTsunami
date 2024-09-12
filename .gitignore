@@ -1,6 +1,7 @@
 .neptune
 **/sacred_logs/
 **/sbatch_logs/
+
 *.tar
 *tar.gz
 
@@ -18,6 +19,7 @@ data/simu/*
 resources/processed/eve_rate/*
 resources/gis/bathy/*
 resources/gis/dtopo/*.asc
+resources/raw/eve_rate/*
 
 scripts/Catania/__pycache__/*
 scripts/Catania/.neptune/*
@@ -57,10 +59,12 @@ scripts/testing/sacred_logs/*
 scripts/testing/out/*
 
 scripts/Rome/__pycache__/*
-scripts/testing/.neptune/*
-scripts/testing/configs/*
-scripts/testing/log/*
-scripts/testing/sacred_logs/*
-scripts/testing/out/*
+scripts/Rome/.neptune/*
+scripts/Rome/configs/*
+scripts/Rome/log/*
+scripts/Rome/sacred_logs/*
+scripts/Rome/out/*
+
+scripts/PaperIIRuns/configs/*
 
 
