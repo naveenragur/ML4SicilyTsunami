@@ -35,18 +35,48 @@ conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 # running commands
 cd $MLDir/scripts/PaperIIRuns
 
-# Directory with files to compress
-INPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/PTHA"
-OUTPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/2upload/pthaSR"
+# # Directory with files to compress
+# INPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/PTHA"
+# OUTPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/2upload/pthaSR"
 
-# Get a list of only *.dat and *.npy files in the directory, and process in batches of 10
-# FILE_LIST=$(ls $INPUT_DIR/*.pt $INPUT_DIR/*.npy 2> /dev/null | sed -n "$(( (${SLURM_ARRAY_TASK_ID} - 1) * 10 + 1 )),$(( ${SLURM_ARRAY_TASK_ID} * 10 ))p")
-FILE_LIST=$(ls $INPUT_DIR/*_d_* 2> /dev/null | sed -n "$(( (${SLURM_ARRAY_TASK_ID} - 1) * 10 + 1 )),$(( ${SLURM_ARRAY_TASK_ID} * 10 ))p")
+# # Get a list of only *.dat and *.npy files in the directory, and process in batches of 10
+# # FILE_LIST=$(ls $INPUT_DIR/*.pt $INPUT_DIR/*.npy 2> /dev/null | sed -n "$(( (${SLURM_ARRAY_TASK_ID} - 1) * 10 + 1 )),$(( ${SLURM_ARRAY_TASK_ID} * 10 ))p")
+# FILE_LIST=$(ls $INPUT_DIR/*_d_* 2> /dev/null | sed -n "$(( (${SLURM_ARRAY_TASK_ID} - 1) * 10 + 1 )),$(( ${SLURM_ARRAY_TASK_ID} * 10 ))p")
 
-# Compress 10 files in parallel using xargs and gzip
-echo "$FILE_LIST" | xargs -P 10 -I {} bash -c 'gzip -v --fast -c "$1" > "$2/$(basename $1).gz"' _ {} $OUTPUT_DIR
+# # Compress 10 files in parallel using xargs and gzip
+# echo "$FILE_LIST" | xargs -P 10 -I {} bash -c 'gzip -v --fast -c "$1" > "$2/$(basename $1).gz"' _ {} $OUTPUT_DIR
 
-echo "Compressed 10 files in parallel for task ID: $SLURM_ARRAY_TASK_ID"
+# echo "Compressed 10 files in parallel for task ID: $SLURM_ARRAY_TASK_ID"
+
+
+# tar -czvf depth_SR.tar.gz pred_d_961.npy pred_d_1773.npy pred_d_3669.npy pred_d_6941.npy true_d_53550.npy 
+# tar -czvf depth_CT.tar.gz pred_d_892_direct.npy pred_d_1658_direct.npy pred_d_3454_direct.npy pred_d_7071_direct.npy true_d_53550.npy 
+
+
+# # Define input and output directories
+# INPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/PTHA"
+# OUTPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/2upload/pthaSR"
+
+# # List of files to compress
+# FILE_LIST=(pred_d_961.npy pred_d_1773.npy pred_d_3669.npy pred_d_6941.npy true_d_53550.npy)
+# cd $INPUT_DIR
+
+# # Compress each file in the list
+# for file in ${FILE_LIST[@]}; do
+#     gzip -v --fast -c "$file" > "$OUTPUT_DIR/$(basename $file).gz"
+# done
+
+# Define input and output directories
+INPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/PTHA"
+OUTPUT_DIR="/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/2upload/pthaCT"
+FILE_LIST=(pred_d_892_direct.npy pred_d_1658_direct.npy pred_d_3454_direct.npy pred_d_7071_direct.npy true_d_53550.npy)
+cd $INPUT_DIR
+
+# Compress each file in the list
+for file in ${FILE_LIST[@]}; do
+    gzip -v --fast -c "$file" > "$OUTPUT_DIR/$(basename $file).gz"
+done
+
 
 # finished commands
 echo ...........

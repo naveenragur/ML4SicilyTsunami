@@ -47,45 +47,45 @@ if mode == 'compile':
     index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.txt')
     index_map.columns = ['m','n','lat','lon'] #add column names
 
-    #true depth
-    print('Processing true depths')
-    for test_size in ['0','1','2','3']:
-        print(f'Processing test size {test_size}')
-        # load test events related parameters
-        event_list_path = f'{MLDir}/data/events/shuffled_events_test_{reg}_{test_size}.txt'
-        event_list = np.loadtxt(event_list_path, dtype='str')
-        n_eve = len(event_list) 
-
-        true_d_array = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{test_size}.dat',
-                                mode='r',
-                                dtype=float,
-                                shape=(n_eve, nflood_grids))
-        tensor = torch.tensor(true_d_array,dtype=torch.float16)
-        #append events along first axis
-        if test_size == '0':
-            d = tensor
-        else:
-            d = torch.cat((d,tensor),0)
-    d = d*100
-    d = d.type(torch.int16)
-    np.save(f'{MLDir}/model/{reg}/PTHA/true_d_53550.npy',d)
-    del d,tensor,true_d_array
+    # #true depth
+    # print('Processing true depths')
+    # for test_size in ['0','1','2','3']:
+    #     print(f'Processing test size {test_size}')
+    #     # load test events related parameters
+    #     event_list_path = f'{MLDir}/data/events/shuffled_events_test_{reg}_{test_size}.txt'
+    #     event_list = np.loadtxt(event_list_path, dtype='str')
+    #     n_eve = len(event_list) 
+    # 
+    #     true_d_array = np.memmap(f'{MLDir}/data/processed/dflat_{reg}_{test_size}.dat',
+    #                             mode='r',
+    #                             dtype=float,
+    #                             shape=(n_eve, nflood_grids))
+    #     tensor = torch.tensor(true_d_array,dtype=torch.float16)
+    #     #append events along first axis
+    #     if test_size == '0':
+    #         d = tensor
+    #     else:
+    #         d = torch.cat((d,tensor),0)
+    # d = d*100
+    # d = d.type(torch.int16)
+    # np.save(f'{MLDir}/model/{reg}/PTHA/true_d_53550.npy',d)
+    # del d,tensor,true_d_array
     
-    #nodeform
-    print('Processing nodeform depths')
-    for test_size in ['0','1','2','3']:
-        print(f'Processing test size {test_size}')
-        pred_d_array = np.load(f'{MLDir}/model/{reg}/out/pred_trainsize{train_size}_testsize{test_size}_nodeform.npy')
-        tensor = torch.tensor(pred_d_array,dtype=torch.float16)
-        #append events along first axis
-        if test_size == '0':
-            d = tensor
-        else:
-            d = torch.cat((d,tensor),0)
-    d = d*100
-    d = d.type(torch.int16)
-    np.save(f'{MLDir}/model/{reg}/PTHA/pred_d_{train_size}_nodeform.npy',d)
-    del d,tensor,pred_d_array
+    # #nodeform
+    # print('Processing nodeform depths')
+    # for test_size in ['0','1','2','3']:
+    #     print(f'Processing test size {test_size}')
+    #     pred_d_array = np.load(f'{MLDir}/model/{reg}/out/pred_trainsize{train_size}_testsize{test_size}_nodeform.npy')
+    #     tensor = torch.tensor(pred_d_array,dtype=torch.float16)
+    #     #append events along first axis
+    #     if test_size == '0':
+    #         d = tensor
+    #     else:
+    #         d = torch.cat((d,tensor),0)
+    # d = d*100
+    # d = d.type(torch.int16)
+    # np.save(f'{MLDir}/model/{reg}/PTHA/pred_d_{train_size}_nodeform.npy',d)
+    # del d,tensor,pred_d_array
 
     #save direct depths
     print('Processing direct depths')

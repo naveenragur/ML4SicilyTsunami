@@ -16,6 +16,7 @@ try:
     mode = sys.argv[2] #reprocess or post
     train_size = sys.argv[3] #eventset size used for training
     mask_size = sys.argv[4] #eventset size used for testing
+    start = sys.argv[5] #start number
 except:
     raise Exception("*** Must first set environment variable")
 
@@ -104,15 +105,17 @@ index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.t
 index_map.columns = ['m','n','lat','lon'] #add column names
 
 if mode == 'compare':
-    for id in ids:
-        eve = np.where(eve_id==id)[0][0]
-        print(id,'\n',eve)
+    # for id in ids:
+    # for id in eve_id:
         # eve=32145
         # id =eve_id[eve]
-
+    for id in eve_id[int(start):]: #start from a given event 
+        eve = np.where(eve_id==id)[0][0]
+        print(id,'\n',eve)
         #read dZ file and grid location file to extract location information
         data2plot = xr.open_dataset(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/simu/{id}/{reg}_deformation.nc')
         dz = data2plot['deformation'].values
+
         # (948 x 1300)
         # x = data2plot['x'].values #1300
         # y = data2plot['y'].values #948
@@ -251,6 +254,7 @@ if mode == 'compare':
         plt.savefig(f'{MLDir}/model/{reg}/compare/{id}_{train_size}_{reg}_{str(eve)}.png',
                     dpi=100, bbox_inches='tight', pad_inches=0.1)
         #close figure
+        plt.clf()
         plt.close(fig)
 
 elif mode == 'compare_pygmt':
