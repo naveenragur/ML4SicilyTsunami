@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn08
+#SBATCH --nodelist=cn06
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -160,15 +160,15 @@ cd $MLDir/scripts/PaperIIRuns
 # python 05_calcPerfGrid.py SR testfile 1773 961
 
 # # #For plotting PTHA maps for true and pred depths
-# python 07_calcPTHA.py SR PTHA_rate 1773 961
-# python 07_calcPTHA.py SR emulator_rate 1773 961
+python 07_calcPTHA.py SR PTHA_rate 1773 961
+python 07_calcPTHA.py SR emulator_rate 1773 961
 
 #For comparison plots
-conda deactivate
-conda activate rioxarray_env
-# python 06_compare_depths.py SR compare_pygmt 1773 961
-python 06_compare_depths.py SR compare 1773 961 0
-# finished commands
+# conda deactivate
+# conda activate rioxarray_env
+# # python 06_compare_depths.py SR compare_pygmt 1773 961
+# python 06_compare_depths.py SR compare 1773 961 0
+# # finished commands
 echo ...........
 end=`date +%s`
 elapsed=`expr $end - $begin`
