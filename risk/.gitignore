@@ -1,0 +1,5 @@
+hazard/*.csv
+loss/*.zip
+loss/*.hdf5
+loss/*.out
+results/*
