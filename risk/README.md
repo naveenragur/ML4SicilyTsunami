@@ -26,7 +26,7 @@ The repository is organized as follows:
 │   ├── log
 │   └── risk_calc
 ├── temp
-├── vulnerability
+└── vulnerability
 ```
 
 - `exposure/`: Contains input exposure data, scripts for the preparatin of the exposure input to OQ.
