@@ -1,5 +1,15 @@
 hazard/*.csv
+hazard/*.npy
+hazard/log
+
 loss/*.zip
 loss/*.hdf5
 loss/*.out
-results/*
+
+plots/configs
+
+results/*.csv
+results/log
+results/configs
+results/risk_calc/*
+temp/*
