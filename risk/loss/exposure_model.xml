@@ -31,7 +31,7 @@ xmlns:gml="http://www.opengis.net/gml">
             night
         </occupancyPeriods>
         <tagNames>
-            Comune Flooded nFloors Occupancy Construction FloorType Foglio taxonomy
+            Comune Flooded nFloors Occupancy Construction FloorType Foglio
         </tagNames>      
         <assets>
             building_exposure.csv
