@@ -45,3 +45,4 @@ The workflow for this project is as follows:
 5. Model Application
    - The results are used to generate PTHA inundation maps for the regions of interest.
    - The results are compared with HPC based results for a full ptha eventset, subset considering events that cause local deformation and events that dont cause any local deformation.
+   - The inundation hazard is used to implement with OpenQuake an event-based risk analysis. These results are used to benchmark the emulation hazard with different training sizes against HPC based results.
