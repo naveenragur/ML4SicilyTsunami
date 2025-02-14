@@ -1,3 +1,11 @@
+loss_func*
+heavy*
+weighted*
+mse*
+
+
+
+
 CT/out/*.pt
 CT/out/*.npy
 CT/compare/*
