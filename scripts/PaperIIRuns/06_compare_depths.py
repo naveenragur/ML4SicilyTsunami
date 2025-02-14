@@ -32,17 +32,19 @@ def calculate_error(true, pred):
         return error
 
 #plotting the below events
-ids = [
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S112D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
-    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
-    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
-    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
-    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
-    ]
+# ids = [
+#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S112D70R270_A006995_S075',
+#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
+#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
+#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
+#     'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
+#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
+#     'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
+#     'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
+#     'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
+#     ]
+
+ids = pd.read_csv(f'{MLDir}/scripts/PaperIIRuns/bad_events.csv')
 
 #dimensions and gauge numbers
 if reg == 'SR':
@@ -104,12 +106,12 @@ idx= np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/processed/lat_lon
 index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.txt',header=None,sep=',')
 index_map.columns = ['m','n','lat','lon'] #add column names
 
-if mode == 'compare':
-    # for id in ids:
-    # for id in eve_id:
+if mode == 'compare':    
+    for id in ids['id']:
+    # for id in eve_id: #start from the begining
         # eve=32145
         # id =eve_id[eve]
-    for id in eve_id[int(start):]: #start from a given event 
+    # for id in eve_id[int(start):]: #start from a given event 
         eve = np.where(eve_id==id)[0][0]
         print(id,'\n',eve)
         #read dZ file and grid location file to extract location information

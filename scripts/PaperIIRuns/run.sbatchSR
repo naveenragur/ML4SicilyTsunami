@@ -164,11 +164,11 @@ cd $MLDir/scripts/PaperIIRuns
 # python 07_calcPTHA.py SR emulator_rate 1773 961
 
 #For comparison plots
-# conda deactivate
-# conda activate rioxarray_env
-# # python 06_compare_depths.py SR compare_pygmt 1773 961
-# python 06_compare_depths.py SR compare 1773 961 0
-# # finished commands
+conda deactivate
+conda activate rioxarray_env
+# python 06_compare_depths.py SR compare_pygmt 1773 961
+python 06_compare_depths.py SR compare 1773 961 0
+# finished commands
 echo ...........
 end=`date +%s`
 elapsed=`expr $end - $begin`

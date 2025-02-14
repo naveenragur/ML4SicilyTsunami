@@ -1,0 +1,130 @@
+#!/bin/bash
+#options for sbatch
+#SBATCH --account=PR_carisma
+#SBATCH --job-name=wt_g_mean # Job name
+#SBATCH --time=0-24:00 # time limit (D-HH:MM)
+#SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
+# #SBATCH --cpus-per-task=1 # number of CPU cores per task
+# #SBATCH --partition=cpuq
+# #SBATCH --nodelist=cn07
+#SBATCH -p gpuq # partition
+#SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=gp02
+#SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
+#SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
+
+# for calculating the amount of time the job takes
+begin=`date +%s`
+echo node: $HOSTNAME
+echo start time: `date`
+echo ...........
+
+# setting up variables if provided
+region=$1
+size=$2
+mode=$3
+masksize=$4
+split=$5
+#TODO: add channels, zdim, and other hyper parameters  like batch size, learning rate, epoch of pretrian etc
+
+# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize'
+
+# loading modules or conda
+source /home/${USER}/.bash_profile # loading bash_proi
+conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
+
+# running commands
+cd $MLDir/scripts/loss_func
+
+#quick commands
+# cat /proc/cpuinfo 
+export CUDA_VISIBLE_DEVICES=0
+# # python checkgpu.py
+# nvidia-smi
+
+nvidia-smi --query-gpu=timestamp,index,name,utilization.gpu,utilization.memory,memory.used,memory.total --format=csv -l 30 > gpu_usage.log &
+
+#direct training - fulltuneED with or without deform input and then test
+# echo 'Running jobs for direct models for loss functions' 
+
+python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=heavy_mse_asym15' 'loss_type=mse_asym' 'asym_alpha=15' #loss type MSE sum
+python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=heavy_mse_asym15' #evaluate
+python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=heavy_mse_asym15' #evaluate
+python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=heavy_mse_asym15' #evaluate
+python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=heavy_mse_asym15' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_MSE' #loss type None ie MSE
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_MSE' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_MSE' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_MSE' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_MSE' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_MSEsum' 'loss_type=MSEsum' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_MSEsum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_MSEsum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_MSEsum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_MSEsum' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_g_loss' 'loss_type=g_loss' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_g_loss' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_g_loss_sum' 'loss_type=g_loss' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_g_loss_sum' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_wt_g_loss' 'loss_type=wt_g_loss' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_wt_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_wt_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_wt_g_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_wt_g_loss' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_wt_g_loss_sum' 'loss_type=wt_g_loss' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_wt_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_wt_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_wt_g_loss_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_wt_g_loss_sum' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_mse_asym' 'loss_type=mse_asym' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_mse_asym' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_mse_asym' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_mse_asym' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_mse_asym' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_mse_asym_sum' 'loss_type=mse_asym_sum' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_mse_asym_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_mse_asym_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_mse_asym_sum' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_mse_asym_sum' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=loss_func_mse_asym_wtl2norm' 'loss_type=mse_asym_wtl2norm' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=loss_func_mse_asym_wtl2norm' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=loss_func_mse_asym_wtl2norm' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=loss_func_mse_asym_wtl2norm' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=loss_func_mse_asym_wtl2norm' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=weighted_hybrid_loss' 'loss_type=weighted_hybrid_loss' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=weighted_hybrid_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=weighted_hybrid_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=weighted_hybrid_loss' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=weighted_hybrid_loss' #evaluate
+
+# python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=heavy_mse_asym10' 'loss_type=mse_asym' #loss type MSE sum
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=heavy_mse_asym10' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=heavy_mse_asym10' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=heavy_mse_asym10' #evaluate
+# python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=heavy_mse_asym10' #evaluate
+
+
+#stop nvidia-smi logging
+killall nvidia-smi
+
+# finished commands
+echo ...........
+end=`date +%s`
+elapsed=`expr $end - $begin`
+echo Time taken: $elapsed seconds
