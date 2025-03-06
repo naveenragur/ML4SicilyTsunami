@@ -1,0 +1,61 @@
+Starting oq-zworkerpool on cn03
+Writing cn03 2 on /mnt/beegfs/tmp.openquake/naveen.raguramalinga/calc_45/hostcores
+[2025-03-03 08:52:56 #45 ERROR] Traceback (most recent call last):
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1440, in __init__
+    value = convert(val)
+            ^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1294, in secondary_perils
+    out.append(getattr(classes, name).__name__)
+               ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'openquake.sep.classes' has no attribute 'tsunami'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/engine/engine.py", line 189, in run_calc
+    oqparam = log.get_oqparam()
+              ^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/logs.py", line 236, in get_oqparam
+    return readinput.get_oqparam(self.params, validate=validate)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/readinput.py", line 365, in get_oqparam
+    oqparam = OqParam(**job_ini)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/oqvalidation.py", line 1231, in __init__
+    super().__init__(**names_vals)
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1442, in __init__
+    raise ValueError('%s: could not convert to %s: %s=%s'
+ValueError: module 'openquake.sep.classes' has no attribute 'tsunami': could not convert to secondary_perils: secondary_perils=tsunami
+
+Traceback (most recent call last):
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1440, in __init__
+    value = convert(val)
+            ^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1294, in secondary_perils
+    out.append(getattr(classes, name).__name__)
+               ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'openquake.sep.classes' has no attribute 'tsunami'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/engine/engine.py", line 446, in <module>
+    run_calc(jobctx)
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/engine/engine.py", line 189, in run_calc
+    oqparam = log.get_oqparam()
+              ^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/logs.py", line 236, in get_oqparam
+    return readinput.get_oqparam(self.params, validate=validate)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/readinput.py", line 365, in get_oqparam
+    oqparam = OqParam(**job_ini)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/commonlib/oqvalidation.py", line 1231, in __init__
+    super().__init__(**names_vals)
+  File "/home/naveen.raguramalinga/opt/src/oq-engine/openquake/hazardlib/valid.py", line 1442, in __init__
+    raise ValueError('%s: could not convert to %s: %s=%s'
+ValueError: module 'openquake.sep.classes' has no attribute 'tsunami': could not convert to secondary_perils: secondary_perils=tsunami
+WorkerPool on cn03 stopped
+stopped ['cn03']

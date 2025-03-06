@@ -1,0 +1,48 @@
+Starting oq-zworkerpool on cn07
+Writing cn07 2 on /mnt/beegfs/tmp.openquake/naveen.raguramalinga/calc_49/hostcores
+[2025-03-03 15:29:45 #49 INFO] naveen.raguramalinga@cn07 running /mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/risk/demos/tsunamiebr_gmf/job.ini [--hc=None]
+[2025-03-03 15:29:45 #49 INFO] Using engine version 3.22.0-gitc856ac0
+[2025-03-03 15:29:46 #49 WARNING] Version v3.23.0 of the engine is available, but you are still using version 3.22.0-gitc856ac0
+[2025-03-03 15:29:47 #49 WARNING] Using 2 slurm workers
+[2025-03-03 15:29:47 #49 INFO] Checksum of the inputs: 936056409 (total size 45.7 MB)
+[2025-03-03 15:29:47 #49 INFO] Reading /mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/risk/demos/tsunamiebr_gmf/exposure_model.xml
+[2025-03-03 15:29:47 #49 INFO] Read 16_538 assets in 0.15s from /mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/risk/demos/tsunamiebr_gmf/building_exposure.csv
+[2025-03-03 15:29:47 #49 INFO] Inferred exposure mesh in 0.06 seconds
+[2025-03-03 15:29:47 #49 INFO] Associated 9_414 assets (of 16_538) to 9_375 sites (of 579_439)
+[2025-03-03 15:29:47 #49 INFO] Found 5 taxonomies with ~1882.8 assets each
+[2025-03-03 15:29:47 #49 INFO] The most common taxonomy is RC_LR with 4548 assets
+[2025-03-03 15:29:47 #49 INFO] 7124 assets were discarded because too far from the rupture; use `oq show discarded` to show them and `oq plot_assets` to plot them
+[2025-03-03 15:29:47 #49 INFO] minimum_asset_loss={'structural': 0}
+[2025-03-03 15:29:47 #49 INFO] Storing 1 aggregation keys
+[2025-03-03 15:29:48 #49 INFO] Storing 53550 events, 10 relevant
+[2025-03-03 15:29:48 #49 INFO] Storing risk model
+[2025-03-03 15:29:48 #49 INFO] There are 0 ruptures and 53_550 events
+[2025-03-03 15:29:48 #49 INFO] Transfering 73.55 KB per core in avg_losses
+[2025-03-03 15:29:48 #49 INFO] Reading event weights
+[2025-03-03 15:29:48 #49 INFO] maxw = 1_899
+[2025-03-03 15:29:51 #49 WARNING] Sent 8 ebr_from_gmfs tasks, 18.12 KB
+[2025-03-03 15:29:54 #49 INFO] ebr_from_gmfs  12% [8 submitted, 0 queued]
+[2025-03-03 15:29:54 #49 INFO] ebr_from_gmfs  25% [8 submitted, 0 queued]
+[2025-03-03 15:29:54 #49 INFO] ebr_from_gmfs  37% [8 submitted, 0 queued]
+[2025-03-03 15:29:54 #49 INFO] ebr_from_gmfs  50% [8 submitted, 0 queued]
+[2025-03-03 15:29:54 #49 INFO] ebr_from_gmfs  62% [8 submitted, 0 queued]
+[2025-03-03 15:29:55 #49 INFO] ebr_from_gmfs  75% [8 submitted, 0 queued]
+[2025-03-03 15:29:55 #49 INFO] ebr_from_gmfs  87% [8 submitted, 0 queued]
+[2025-03-03 15:29:55 #49 INFO] ebr_from_gmfs 100% [8 submitted, 0 queued]
+[2025-03-03 15:29:55 #49 INFO] Mean time per core=0s, std=0.0s, min=0s, max=0s
+[2025-03-03 15:29:55 #49 INFO] Received 8 * 134.14 KB in 3 seconds [unpik=0.00s] from ebr_from_gmfs
+{'avg': '1.04 MB', 'alt': '7.47 KB', 'gmf_bytes': '928 B'}
+[2025-03-03 15:29:55 #49 INFO] Storing avg_losses-rlzs/structural
+[2025-03-03 15:29:55 #49 INFO] Running PostRiskCalculator with concurrent_tasks = 24
+[2025-03-03 15:29:55 #49 WARNING] eff_time=1.0 is too small to compute loss curves
+[2025-03-03 15:29:55 #49 INFO] Exposing the outputs to the database
+[2025-03-03 15:29:55 #49 INFO]   id | name
+ 196 | Aggregated Risk By Event
+ 192 | Average Asset Losses
+ 193 | Events
+ 191 | Exposure CSV
+ 194 | Full Report
+ 195 | Ground Motion Fields
+[2025-03-03 15:29:55 #49 INFO] Stored 46.23 MB on /home/naveen.raguramalinga/oqdata/calc_49.hdf5 in 8 seconds
+WorkerPool on cn07 stopped
+stopped ['cn07']

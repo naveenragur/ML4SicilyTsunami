@@ -2,9 +2,11 @@ loss_func*
 heavy*
 weighted*
 mse*
-
-
-
+lr*
+bs*
+error*
+sigma*
+direct*
 
 CT/out/*.pt
 CT/out/*.npy
@@ -16,5 +18,7 @@ SR/out/*.pt
 SR/out/*.npy
 SR/compare/*
 SR/PTHA/*
+SR*
+CT*
 
 backup/*
