@@ -162,10 +162,10 @@ cd $MLDir/scripts/PaperIIRuns
 # python 07_calcPTHA.py CT emulator_rate 1658 892 
 
 #For comparison plots
-conda deactivate
-conda activate rioxarray_env
+# conda deactivate
+# conda activate rioxarray_env
 # python 06_compare_depths.py CT compare_pygmt 1658 892
-python 06_compare_depths.py CT compare 1658 892 0
+# python 06_compare_depths.py CT compare 1658 892 0
 
 
 # finished commands

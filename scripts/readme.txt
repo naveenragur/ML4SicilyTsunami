@@ -1,4 +1,6 @@
-Sep  9 2024 readme.txt - different versions of models and codes
+Feb 14 2025 readme.txt - different versions of models and codes
+Feb 13 2025 loss_func - test different loss function to improve on the underprediciton problem at the tail of the hazard curve
+Jan 31 2024 updates - using SIS from Alice to train emulator
 Sep  7 2024 PaperIIPlots - Plots for NPJ paper 2024
 Aug 19 2024 PaperIIRuns - Training and setup used in NPJ paper 2024
 Apr  3 2024 Rome - codes for results produced in INGV visit of April 2024 before EGU, for working with Alice,Stefano and Gareth

@@ -1,0 +1,19 @@
+Starting oq-zworkerpool on cn03
+Writing cn03 2 on /mnt/beegfs/tmp.openquake/naveen.raguramalinga/calc_47/hostcores
+[2025-03-03 15:26:32 #47 INFO] Memory occupation 95%, the user should free some memory
+[2025-03-03 15:26:37 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:26:42 #47 INFO] Memory occupation 95%, the user should free some memory
+[2025-03-03 15:26:47 #47 INFO] Memory occupation 95%, the user should free some memory
+[2025-03-03 15:26:52 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:26:58 #47 INFO] Memory occupation 95%, the user should free some memory
+[2025-03-03 15:27:03 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:27:08 #47 INFO] Memory occupation 94%, the user should free some memory
+[2025-03-03 15:27:13 #47 INFO] Memory occupation 95%, the user should free some memory
+[2025-03-03 15:27:18 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:27:23 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:27:28 #47 INFO] Memory occupation 96%, the user should free some memory
+[2025-03-03 15:27:33 #47 INFO] Memory occupation 94%, the user should free some memory
+[2025-03-03 15:27:38 #47 INFO] Memory occupation 96%, the user should free some memory
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 95637 ON cn03 CANCELLED AT 2025-03-03T15:27:43 ***
+slurmstepd: error: *** STEP 95637.0 ON cn03 CANCELLED AT 2025-03-03T15:27:43 ***
