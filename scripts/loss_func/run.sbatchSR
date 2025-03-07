@@ -60,7 +60,7 @@ export CUDA_VISIBLE_DEVICES=0
 
 
 #for quick testing
-python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+# python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 
