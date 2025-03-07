@@ -51,19 +51,19 @@ export CUDA_VISIBLE_DEVICES=0
 #direct training - fulltuneED with or without deform input and then test
 # echo 'Running jobs for direct models for loss functions' 
 
-train_list=(529 892 1658 3454 7071)
-test_list=(0 1 2 3)
-mask_size=${train_list[1]}
-reg=CT
+# train_list=(529 892 1658 3454 7071)
+# test_list=(0 1 2 3)
+# mask_size=${train_list[1]}
+# reg=CT
 
-for train in ${train_list[@]}; do
-    echo 'Running training with size' $train
-    python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
-    for test in ${test_list[@]}; do
-        echo 'Running prediction form training size' $train
-        python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
-    done
-done
+# for train in ${train_list[@]}; do
+#     echo 'Running training with size' $train
+#     python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+#     for test in ${test_list[@]}; do
+#         echo 'Running prediction form training size' $train
+#         python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
+#     done
+# done
 
 
 # python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
