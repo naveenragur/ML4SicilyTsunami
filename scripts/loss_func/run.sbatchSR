@@ -9,7 +9,7 @@
 # #SBATCH --nodelist=cn07
 #SBATCH -p gpuq # partition
 #SBATCH --gres=gpu:1 # number of GPUs
-#SBATCH --nodelist=gp02
+#SBATCH --nodelist=gp01
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 
@@ -44,23 +44,23 @@ export CUDA_VISIBLE_DEVICES=0
 # echo 'Running 01_preprocess.py' 
 # python 01_preprocess.py SR 550 train 961 #first test set
 
-train_list=(550 961 1773 3669 6941)
-test_list=(0 1 2 3)
-mask_size=${train_list[1]}
-reg=SR
+# train_list=(550 961 1773 3669 6941)
+# test_list=(0 1 2 3)
+# mask_size=${train_list[1]}
+# reg=SR
 
-for train in ${train_list[@]}; do
-    echo 'Running training with size' $train
-    python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
-    for test in ${test_list[@]}; do
-        echo 'Running prediction form training size' $train
-        python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
-    done
-done
+# for train in ${train_list[@]}; do
+#     echo 'Running training with size' $train
+#     python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+#     for test in ${test_list[@]}; do
+#         echo 'Running prediction form training size' $train
+#         python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
+#     done
+# done
 
 
 #for quick testing
-# python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
 # python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 

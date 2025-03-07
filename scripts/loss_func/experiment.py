@@ -1855,6 +1855,9 @@ class BuildTsunamiAE():
 
         # Train model
         for epoch in range(self.nepochs):
+            if epoch == 2:
+                #calculate no of param
+                print('no of total param:',sum(p.numel() for p in self.model.parameters() if p.requires_grad))
             train_loss, val_loss, test_loss = 0, 0, 0
             for batch_idx,(batch_data_in,batch_data_deformfull,batch_data_out) in enumerate(zip(train_loader_in,train_loader_deformfull,train_loader_out)):
                 self.optimizer.zero_grad()
