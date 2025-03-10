@@ -46,6 +46,7 @@ export CUDA_VISIBLE_DEVICES=0
 
 # python 00_calcFlowdepth.py CT
 
+# python 01_preprocess.py CT 225 train 892 #first test set
 # python 01_preprocess.py CT 529 train 892 #first test set
 
 #direct training - fulltuneED with or without deform input and then test
@@ -65,14 +66,12 @@ export CUDA_VISIBLE_DEVICES=0
 #     done
 # done
 
-
-# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
-# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=sigmaMC' 
-# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=sigmaMC' 
-# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=sigmaMC' 
-
-
-
+#for a quick single run
+python main.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
+python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=1' 'task=sigmaMC' 
+python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=2' 'task=sigmaMC' 
+python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=3' 'task=sigmaMC' 
 
 #stop nvidia-smi logging
 # killall nvidia-smi
