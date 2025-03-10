@@ -9,7 +9,7 @@
 # #SBATCH --nodelist=cn07
 #SBATCH -p gpuq # partition
 #SBATCH --gres=gpu:1 # number of GPUs
-#SBATCH --nodelist=gp01
+#SBATCH --nodelist=gp02
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 
@@ -42,6 +42,7 @@ export CUDA_VISIBLE_DEVICES=0
 # nvidia-smi
 
 # echo 'Running 01_preprocess.py' 
+# python 01_preprocess.py SR 228 train 961 #first test set
 # python 01_preprocess.py SR 550 train 961 #first test set
 
 # train_list=(550 961 1773 3669 6941)
@@ -60,11 +61,11 @@ export CUDA_VISIBLE_DEVICES=0
 
 
 #for quick testing
-# python main.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
-# python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
-# python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
-# python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 
-# python error_test.py with 'reg=SR' 'train_size=1773' 'mask_size=961' 'test_size=3' 'task=sigmaMC' 
+python main.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
+python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
+python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 
+python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=3' 'task=sigmaMC' 
 
 
 # finished commands
