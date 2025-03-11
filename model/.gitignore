@@ -5,8 +5,12 @@ mse*
 lr*
 bs*
 error*
-sigma*
 direct*
+sigmaGNLL*
+
+*/sigmaMC/out/*.pt
+*/sigmaMC/out/*.npy
+*testsize*
 
 CT/out/*.pt
 CT/out/*.npy
@@ -18,7 +22,7 @@ SR/out/*.pt
 SR/out/*.npy
 SR/compare/*
 SR/PTHA/*
-SR*
-CT*
+# SR*
+# CT*
 
 backup/*
