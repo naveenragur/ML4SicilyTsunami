@@ -7,7 +7,7 @@
 #SBATCH --mem=256G # memory limit
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn08
+#SBATCH --nodelist=cn07
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -34,11 +34,14 @@ cd /mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/risk/hazard
 # nvidia-smi
 
 conda activate rioxarray_env
-python prep_depth_true.py
-python prep_depth_pred.py 892
-python prep_depth_pred.py 1658
-python prep_depth_pred.py 3454
-python prep_depth_pred.py 7071
+python prep_depth_pred_mean.py 1658
+python prep_depth_pred_sigmaminus.py 1658
+python prep_depth_pred_sigmaplus.py 1658
+# python prep_depth_true.py
+# python prep_depth_pred.py 892
+# python prep_depth_pred.py 1658
+# python prep_depth_pred.py 3454
+# python prep_depth_pred.py 7071
 
 # finished commands
 echo ...........

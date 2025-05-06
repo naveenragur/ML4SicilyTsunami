@@ -1,0 +1,79 @@
+#!/bin/bash
+#options for sbatch
+#SBATCH --account=PR_carisma
+#SBATCH --job-name=SR_depth # Job name
+#SBATCH --time=0-24:00 # time limit (D-HH:MM)
+#SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
+#SBATCH --cpus-per-task=1 # number of CPU cores per task
+#SBATCH --partition=cpuq
+#SBATCH --nodelist=cn06
+SBATCH -p gpuq # partition
+SBATCH --gres=gpu:1 # number of GPUs
+SBATCH --nodelist=gp02
+#SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
+#SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
+
+# for calculating the amount of time the job takes
+begin=`date +%s`
+echo node: $HOSTNAME
+echo start time: `date`
+echo ...........
+
+# setting up variables if provided
+region=$1
+size=$2
+mode=$3
+masksize=$4
+split=$5
+#TODO: add channels, zdim, and other hyper parameters  like batch size, learning rate, epoch of pretrian etc
+
+# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize'
+
+# loading modules or conda
+source /home/${USER}/.bash_profile # loading bash_proi
+conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
+
+# running commands
+cd $MLDir/scripts/JGR
+
+# #quick commands
+export CUDA_VISIBLE_DEVICES=0
+# # python checkgpu.py
+# nvidia-smi
+
+# echo 'Running 01_preprocess.py' 
+# python 01_preprocess.py SR 228 train 961 #first test set
+# python 01_preprocess.py SR 550 train 961 #first test set
+
+train_list=(228 550 961 1773 3669 6941)
+# test_list=(0 1 2 3)
+mask_size=${train_list[1]}
+reg=SR
+
+# for train in ${train_list[@]}; do
+#     echo 'Running training with size' $train
+#     python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+#     for test in ${test_list[@]}; do
+#         echo 'Running prediction form training size' $train
+#         python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
+#     done
+# done
+
+
+#for quick testing
+# python main.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
+# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
+# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 
+# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=3' 'task=sigmaMC' 
+
+for train in ${train_list[@]}; do
+    echo 'postprocessing to int and combining full eventset' $train
+    python 04_compile_depths.py $reg sigmaMC $train $mask_size
+done
+
+# finished commands
+echo ...........
+end=`date +%s`
+elapsed=`expr $end - $begin`
+echo Time taken: $elapsed seconds
