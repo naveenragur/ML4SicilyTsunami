@@ -1,0 +1,92 @@
+/var/spool/slurmd/job101995/slurm_script: line 10: SBATCH: command not found
+/var/spool/slurmd/job101995/slurm_script: line 11: SBATCH: command not found
+/var/spool/slurmd/job101995/slurm_script: line 12: SBATCH: command not found
+node: cn06
+start time: Fri Mar 14 18:46:13 CET 2025
+...........
+postprocessing to int and combining full eventset 228
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize228_testsize0.npy'
+postprocessing to int and combining full eventset 550
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize550_testsize0.npy'
+postprocessing to int and combining full eventset 961
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize961_testsize0.npy'
+postprocessing to int and combining full eventset 1773
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize1773_testsize0.npy'
+postprocessing to int and combining full eventset 3669
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize3669_testsize0.npy'
+postprocessing to int and combining full eventset 6941
+Processing direct depths
+Processing test size 0
+Processing test size 1
+Processing test size 2
+Processing test size 3
+Processing into combined depth files
+Processing test size 0
+Traceback (most recent call last):
+  File "/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/loss_func/04_compile_depths.py", line 80, in <module>
+    pred_d_array = np.load(f'{MLDir}/model/{reg}/{task}/out/pred_trainsize{train_size}_testsize{test_size}.npy')
+  File "/mnt/beegfs/nragu/tsunami/env/lib/python3.10/site-packages/numpy/lib/npyio.py", line 405, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/sigmaMC/out/pred_trainsize6941_testsize0.npy'
+...........
+Time taken: 1325 seconds

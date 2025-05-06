@@ -10,6 +10,7 @@ sigmaGNLL*
 
 */sigmaMC/out/*.pt
 */sigmaMC/out/*.npy
+*/sigmaMC/PTHA/*
 *testsize*
 
 CT/out/*.pt
