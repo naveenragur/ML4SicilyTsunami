@@ -1,5 +1,5 @@
-#Description: Checks offshore and onshore nc files and create summary statistics
-#run: python 00_filecheck.py $region $size $mode $masksize #only reg used in this script
+#Description: Checks onshore nc files per event and create summary statistics for the overall eventset
+#Usage: python 00_calcFlowdepth.py <region>
 import os
 import sys
 import numpy as np
@@ -37,7 +37,7 @@ OnshorePath = MLDir + '/data/info/CHeight_{:s}_alleve{:s}.onshore.txt'
 #gauge variables: time,eta,depth,velocity
 features_name = ['id','count','dmax','logsum','mean','sd','dzmin','dzmax','hmax']
 all_eve_df = pd.DataFrame(columns = features_name)
-offshore_maxh = pd.DataFrame()
+
 
 #Read event list from file
 event_list = np.loadtxt(f'{MLDir}/data/events/sample_extreme371.txt', dtype='str') 
