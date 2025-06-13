@@ -13,6 +13,10 @@ sigmaGNLL*
 */sigmaMC/PTHA/*
 *testsize*
 
+*/multifoldMC/out/*.pt
+*/multifoldMC/out/*.npy
+*/multifoldMC/PTHA/*
+
 CT/out/*.pt
 CT/out/*.npy
 CT/compare/*

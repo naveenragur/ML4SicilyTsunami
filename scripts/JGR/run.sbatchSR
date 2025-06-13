@@ -2,14 +2,14 @@
 #options for sbatch
 #SBATCH --account=PR_carisma
 #SBATCH --job-name=SR_depth # Job name
-#SBATCH --time=0-24:00 # time limit (D-HH:MM)
+#SBATCH --time=2-00:00 # time limit (D-HH:MM)
 #SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
-#SBATCH --partition=cpuq
-#SBATCH --nodelist=cn06
-SBATCH -p gpuq # partition
-SBATCH --gres=gpu:1 # number of GPUs
-SBATCH --nodelist=gp02
+# #SBATCH --partition=cpuq
+# #SBATCH --nodelist=cn08
+#SBATCH -p gpuq # partition
+#SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=gp02
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 
@@ -19,61 +19,98 @@ echo node: $HOSTNAME
 echo start time: `date`
 echo ...........
 
-# setting up variables if provided
+# setting up variables if provided in the command line
 region=$1
 size=$2
 mode=$3
 masksize=$4
 split=$5
-#TODO: add channels, zdim, and other hyper parameters  like batch size, learning rate, epoch of pretrian etc
-
-# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize'
+# echo 'Running on' $region 'with' $size 'events' $mode 'mode' $masksize 'masksize' #turn on if needed
 
 # loading modules or conda
 source /home/${USER}/.bash_profile # loading bash_proi
 conda activate /mnt/beegfs/nragu/tsunami/env # conda environment
 
-# running commands
+# running commands for the job
 cd $MLDir/scripts/JGR
 
-# #quick commands
-export CUDA_VISIBLE_DEVICES=0
-# # python checkgpu.py
-# nvidia-smi
+#quick commands
+# cat /proc/cpuinfo 
+export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
+# python checkgpu.py
+# nvidia-smi #one time check
 
-# echo 'Running 01_preprocess.py' 
-# python 01_preprocess.py SR 228 train 961 #first test set
-# python 01_preprocess.py SR 550 train 961 #first test set
+# nvidia-smi --query-gpu=timestamp,index,name,utilization.gpu,utilization.memory,memory.used,memory.total --format=csv -l 30 > gpu_usage.log & #to log GPU usage, note kill message at the end
 
-train_list=(228 550 961 1773 3669 6941)
+#preprocessing event info useful for sampling and event selection
+# python 00_calcFlowdepth.py SR
+# python 01_calcWaveheight.py SR
+# python 02_calcWaveperiod SR
+
+#prepare event list for different training and test sizes using the sampling notebook before next steps 
+
+#preprocess individual simulation data to a single numpy file for fast read during training and test evaluations
+# python 04_preprocess.py SR 961 train 961 # first set to setup mask 
+# python 04_preprocess.py SR 0 test 961 # second set to setup mask
+# python 04_preprocess.py SR 1 test 961 # third set to setup mask
+# python 04_preprocess.py SR 2 test 961 # fourth set to setup mask
+# python 04_preprocess.py SR 3 test 961 # fifth set to setup mask
+
+#run the preprocessing for different training sizes in loop
+# train_list=(228 550 1773 3669 6941)
+# for train in ${train_list[@]}; do
+#     echo 'Running preprocessing for training size' $train
+#     python 04_preprocess.py SR $train train 961 # first set to setup mask 
+# done
+
+# direct training - fulltuneED and then test¨
+# echo 'Running jobs for direct models for assigned loss function' 
+
+# train_list=(228 550 961 1773 3669 6941)
 # test_list=(0 1 2 3)
-mask_size=${train_list[1]}
-reg=SR
+# mask_size=961
+# reg=SR
 
 # for train in ${train_list[@]}; do
-#     echo 'Running training with size' $train
-#     python main.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
+#     # echo 'Running training with size' $train
+#     # python train.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'task=multifoldMC' 'loss_type=mse_asym_scale' #train model
 #     for test in ${test_list[@]}; do
 #         echo 'Running prediction form training size' $train
-#         python error_test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=sigmaMC'
+#         python test.py with 'reg='$reg 'train_size='$train 'mask_size='$mask_size 'test_size='$test 'task=multifoldMC' #predict with MC dropout
 #     done
 # done
 
+# postprocessing to int and combining full eventset
+# echo 'postprocessing to int and combining full eventset'
+# for train in ${train_list[@]}; do
+#     echo 'postprocessing to int and combining full eventset' $train
+#     python 05_compile_depths.py $reg multifoldMC $train $mask_size
+# done
 
-#for quick testing
-# python main.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
-# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
-# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=1' 'task=sigmaMC' 
-# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=2' 'task=sigmaMC' 
-# python error_test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=3' 'task=sigmaMC' 
+#Grid calculation and other checks only use model with 1773 events mean prediction
+# echo "Performance calculation for all grids"
+# python 07_calcPerfGrid.py SR Grid 1773 961 #Full eventset
+# python 07_calcPerfGrid.py SR testfile 1773 961 #For comparison with paper1
+# python 07_calcPerfGrid.py SR misfit 1773 961 #For misfit plots - calculate for all events at all grids
 
-for train in ${train_list[@]}; do
-    echo 'postprocessing to int and combining full eventset' $train
-    python 04_compile_depths.py $reg sigmaMC $train $mask_size
-done
+#For plotting PTHA maps for true and depths
+# echo "Calculating PTHA maps for reference and emulation depths"
+# python 08_calcPTHA.py SR PTHA_rate 1773 961
+# python 08_calcPTHA.py SR emulator_rate 1773 961
+# python 08_calcPTHA.py SR emulator_sigma 1773 961  
 
 # finished commands
 echo ...........
 end=`date +%s`
 elapsed=`expr $end - $begin`
 echo Time taken: $elapsed seconds
+
+#for quick testing
+# python train.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'task=multifoldMC' 'loss_type=mse_asym_scale' #train direct model
+# python test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=0' 'task=multifoldMC' #predict with MC dropout
+# python test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=1' 'task=multifoldMC' 
+# python test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=2' 'task=multifoldMC' 
+# python test.py with 'reg=SR' 'train_size=228' 'mask_size=961' 'test_size=3' 'task=multifoldMC' 
+
+#postprocessing to int and combining full eventset
+# python 05_compile_depths.py SR multifoldMC 1773 961

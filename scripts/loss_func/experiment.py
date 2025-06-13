@@ -2707,7 +2707,6 @@ class BuildTsunamiAE():
         self.channels_on = channels_on
         # self.device = device
 
-        
         #read event list   
         event_list_path = f'{self.MLDir}/data/events/shuffled_events_test_{self.reg}_{self.test_size}.txt'
         event_list = np.loadtxt(event_list_path, dtype='str')
