@@ -87,6 +87,12 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 #     python 05_compile_depths.py $reg multifoldMC $train $mask_size
 # done
 
+#For comparison plots
+conda deactivate
+conda activate rioxarray_env
+python 06_compare_depths.py SR compare_pygmt 1773 961 0
+# python 06_compare_depths.py SR compare 1773 961 0
+
 #Grid calculation and other checks only use model with 1773 events mean prediction
 # echo "Performance calculation for all grids"
 # python 07_calcPerfGrid.py SR Grid 1773 961 #Full eventset

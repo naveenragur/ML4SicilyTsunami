@@ -1,4 +1,5 @@
 #Description: Plot depth predictions and errors for different models for a given event
+#Usage: python 06_compare_depths.py <region> <task> <train/test> <mask size>
 import os
 import sys
 os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
@@ -31,20 +32,20 @@ def calculate_error(true, pred):
         error = np.where((error < 0.1) & (error > -0.1), np.nan, error)
         return error
 
-#plotting the below events
-# ids = [
-#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S112D70R270_A006995_S075',
-#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
-#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
-#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
-#     'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
-#     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
-#     'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
-#     'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
-#     'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
-#     ]
+# plotting the below events
+ids = [
+    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S112D70R270_A006995_S075',
+    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
+    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
+    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
+    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
+    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
+    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
+    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
+    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
+    ]
 
-ids = pd.read_csv(f'{MLDir}/scripts/PaperIIRuns/bad_events.csv')
+# ids = pd.read_csv(f'{MLDir}/scripts/PaperIIRuns/bad_events.csv')
 
 #dimensions and gauge numbers
 if reg == 'SR':
@@ -82,20 +83,20 @@ elif reg == 'CT':
         [37.40675,15.05037]]
 
 #check if PTHA directory exists
-if not os.path.exists(f'{MLDir}/model/{reg}/compare'):
-    os.makedirs(f'{MLDir}/model/{reg}/compare')
+if not os.path.exists(f'{MLDir}/model/{reg}/multifoldMC/compare'):
+    os.makedirs(f'{MLDir}/model/{reg}/multifoldMC/compare')
 
 #predictions and post processed predictions
-true_depths = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/true_d_53550.npy')
+true_depths = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/true_d_53550.npy')
 
-pred_depths_nodeform = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}_nodeform.npy')
-eve_perf_nodeform = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_nodeform_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+pred_depths_mean = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/pred_d_{train_size}_direct.npy')
+eve_perf_mean = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
 
-pred_depths_direct = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}_direct.npy')
-eve_perf_direct = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+pred_depths_sigmaplus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_minus_{train_size}_direct.npy')
+# eve_perf_sigmaplus = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
 
-pred_depths_pretrain = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/PTHA/pred_d_{train_size}.npy')
-eve_perf_pretrain = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+pred_depths_sigmaminus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_plus_{train_size}_direct.npy')
+# eve_perf_sigmaminus = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
 
 eve_id = np.loadtxt('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/events/sample_events53550.txt',dtype='str')   
 #inundation attributes
@@ -133,20 +134,20 @@ if mode == 'compare':
         dz_list = dz.flatten()
 
         #cm to m
-        pred_pretrain=pred_depths_pretrain[eve]/100
-        pred_direct=pred_depths_direct[eve]/100
-        pred_nodeform=pred_depths_nodeform[eve]/100
+        pred_mean=pred_depths_mean[eve]/100
+        pred_sigmaminus=pred_depths_sigmaminus[eve]/100
+        pred_sigmaplus=pred_depths_sigmaplus[eve]/100
         true=true_depths[eve]/100
       
         #calculate errors
-        error_pretrain = calculate_error(true, pred_pretrain)
-        error_direct = calculate_error(true, pred_direct)
-        error_nodeform = calculate_error(true, pred_nodeform)
+        error_mean = calculate_error(true, pred_mean)
+        error_sigmaminus = calculate_error(true, pred_sigmaminus)
+        error_sigmaplus = calculate_error(true, pred_sigmaplus)
 
         #remove micro depths for better visualization
-        pred_pretrain= np.where(pred_pretrain < 0.1, np.nan, pred_pretrain)
-        pred_direct= np.where(pred_direct < 0.1, np.nan, pred_direct)
-        pred_nodeform= np.where(pred_nodeform < 0.1, np.nan, pred_nodeform)
+        pred_mean= np.where(pred_mean < 0.1, np.nan, pred_mean)
+        pred_sigmaminus= np.where(pred_sigmaminus < 0.1, np.nan, pred_sigmaminus)
+        pred_sigmaplus= np.where(pred_sigmaplus < 0.1, np.nan, pred_sigmaplus)
         true= np.where(true < 0.1, np.nan, true)
         
         #additional region specific parameters for plotting
@@ -185,45 +186,45 @@ if mode == 'compare':
                     horizontalalignment='center', verticalalignment='center',transform=axs[1].transAxes, fontsize=12)
         axs[1].set_title('True')
 
-        # Pred_no_def
-        PR_pretrain = axs[2].scatter(idx[:, 1], idx[:, 0], c=pred_nodeform, s=0.0005, cmap=cmap_depth,
+        # Pred_mean
+        PR_pretrain = axs[2].scatter(idx[:, 1], idx[:, 0], c=pred_mean, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
-        axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_nodeform):.3f}\nr^2: {eve_perf_nodeform["r2"].iloc[eve]:.3f}\ng: {eve_perf_nodeform["g"].iloc[eve]:.3f}',
+        axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_mean):.3f}\nr^2: {eve_perf_mean["r2"].iloc[eve]:.3f}\ng: {eve_perf_nodeform["g"].iloc[eve]:.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[2].transAxes, fontsize=12)
         axs[2].set_title('Without Def. or Pretrain\nPrediction')
 
         # Error
-        ER_pretrain = axs[3].scatter(idx[:, 1], idx[:, 0], c=error_nodeform, s=0.0005, cmap=cmap_error,
+        ER_pretrain = axs[3].scatter(idx[:, 1], idx[:, 0], c=error_mean, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
-        axs[3].text(xpos,ypos, f'max: {np.nanmax(error_nodeform):.3f},\nmin: {np.nanmin(error_nodeform):.3f}',
+        axs[3].text(xpos,ypos, f'max: {np.nanmax(error_mean):.3f},\nmin: {np.nanmin(error_mean):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[3].transAxes, fontsize=12)
         axs[3].set_title('Without Def. or Pretrain\nError')
 
-        # Pred_direct
-        PR_direct = axs[4].scatter(idx[:, 1], idx[:, 0], c=pred_direct, s=0.0005, cmap=cmap_depth,
+        # Pred_sigmaminus
+        PR_direct = axs[4].scatter(idx[:, 1], idx[:, 0], c=pred_sigmaminus, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
-        axs[4].text(xpos,ypos, f'max: {np.nanmax(pred_direct):.3f}\nr^2: {eve_perf_direct["r2"].iloc[eve]:.3f}\ng: {eve_perf_direct["g"].iloc[eve]:.3f}',
+        axs[4].text(xpos,ypos, f'max: {np.nanmax(pred_sigmaminus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[4].transAxes, fontsize=12)
         axs[4].set_title('With Def. no Pretrain\nPrediction')
 
         # Error
-        ER_direct = axs[5].scatter(idx[:, 1], idx[:, 0], c=error_direct, s=0.0005, cmap=cmap_error,
+        ER_direct = axs[5].scatter(idx[:, 1], idx[:, 0], c=error_sigmaminus, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
-        axs[5].text(xpos,ypos, f'max: {np.nanmax(error_direct):.3f},\nmin: {np.nanmin(error_direct):.3f}',
+        axs[5].text(xpos,ypos, f'max: {np.nanmax(error_sigmaminus):.3f},\nmin: {np.nanmin(error_sigmaminus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[5].transAxes, fontsize=12)
         axs[5].set_title('With Def. no Pretrain\nError')
 
         # Pred_pretrain
-        PR_pretrain = axs[6].scatter(idx[:, 1], idx[:, 0], c=pred_pretrain, s=0.0005, cmap=cmap_depth,
+        PR_pretrain = axs[6].scatter(idx[:, 1], idx[:, 0], c=pred_sigmaplus, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
-        axs[6].text(xpos,ypos, f'max: {np.nanmax(pred_pretrain):.3f}\nr^2: {eve_perf_pretrain["r2"].iloc[eve]:.3f}\ng: {eve_perf_pretrain["g"].iloc[eve]:.3f}',
+        axs[6].text(xpos,ypos, f'max: {np.nanmax(pred_sigmaplus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[6].transAxes, fontsize=12)
         axs[6].set_title('With Def. and Pretrain\nPrediction')
 
         #Error
-        ER_pretrain = axs[7].scatter(idx[:, 1], idx[:, 0], c=error_pretrain, s=0.0005, cmap=cmap_error,
+        ER_pretrain = axs[7].scatter(idx[:, 1], idx[:, 0], c=error_sigmaplus, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
-        axs[7].text(xpos,ypos, f'max: {np.nanmax(error_pretrain):.3f},\nmin: {np.nanmin(error_pretrain):.3f}',
+        axs[7].text(xpos,ypos, f'max: {np.nanmax(error_sigmaplus):.3f},\nmin: {np.nanmin(error_sigmaplus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[7].transAxes, fontsize=12)
         axs[7].set_title('With Def. and Pretrain\nError')
 
@@ -264,20 +265,20 @@ elif mode == 'compare_pygmt':
         eve = np.where(eve_id==id)[0][0]
         print(id,'\n',eve)
         #cm to m
-        pred_pretrain=pred_depths_pretrain[eve]/100
-        pred_direct=pred_depths_direct[eve]/100
-        pred_nodeform=pred_depths_nodeform[eve]/100
+        pred_mean=pred_depths_mean[eve]/100
+        pred_sigmaminus=pred_depths_sigmaminus[eve]/100
+        pred_sigmaplus=pred_depths_sigmaplus[eve]/100
         true=true_depths[eve]/100
     
         #calculate errors
-        error_pretrain = calculate_error(true, pred_pretrain)
-        error_direct = calculate_error(true, pred_direct)
-        error_nodeform = calculate_error(true, pred_nodeform)
+        error_mean = calculate_error(true, pred_mean)
+        error_sigmaminus = calculate_error(true, pred_sigmaminus)
+        error_sigmaplus = calculate_error(true, pred_sigmaplus)
 
         #remove micro depths for better visualization
-        pred_pretrain= np.where(pred_pretrain < 0.1, np.nan, pred_pretrain)
-        pred_direct= np.where(pred_direct < 0.1, np.nan, pred_direct)
-        pred_nodeform= np.where(pred_nodeform < 0.1, np.nan, pred_nodeform)
+        pred_mean= np.where(pred_mean < 0.1, np.nan, pred_mean)
+        pred_sigmaminus= np.where(pred_sigmaminus < 0.1, np.nan, pred_sigmaminus)
+        pred_sigmaplus= np.where(pred_sigmaplus < 0.1, np.nan, pred_sigmaplus)
         true= np.where(true < 0.1, np.nan, true)
         
         #additional region specific parameters for plotting
@@ -342,13 +343,13 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
-                filter = ~np.isnan(pred_nodeform) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_nodeform[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(pred_mean) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_nodeform[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{eve_perf_nodeform["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{eve_perf_nodeform["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
+                fig.text(position=pos, text=f'r^2:{eve_perf_mean["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'g:{eve_perf_mean["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,2]): #nodeform inundation error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
@@ -356,12 +357,12 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
-                filter = ~np.isnan(error_nodeform) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_nodeform[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(error_mean) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_nodeform[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'min:{np.nanmin(error_nodeform[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(error_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
+                fig.text(position=pos, text=f'min:{np.nanmin(error_mean[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
                 # fig.colorbar(cmap=True, position="JBC+o0/1c+w10c/0.5c+h",frame=["a2","x+lError", "y+lm"])
             with fig.set_panel(panel=[0,3]): #with deformation inundation depth
                 #basemap
@@ -370,13 +371,13 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
-                filter = ~np.isnan(pred_direct) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_direct[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(pred_sigmaminus) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_direct[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{eve_perf_direct["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{eve_perf_direct["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
+                # fig.text(position=pos, text=f'r^2:{eve_perf_direct["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                # fig.text(position=pos, text=f'g:{eve_perf_direct["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,4]): #with deformation inundation error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
@@ -384,12 +385,12 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
-                filter = ~np.isnan(error_direct) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_direct[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(error_sigmaminus) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_direct[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
-                fig.text(position=pos, text=f'min:{np.nanmin(error_direct[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaminus[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
+                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
             with fig.set_panel(panel=[0,5]): #with deformation and pretrain inundation depth
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
@@ -397,13 +398,13 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
-                filter = ~np.isnan(pred_pretrain) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_pretrain[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(pred_sigmaplus) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_pretrain[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{eve_perf_pretrain["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{eve_perf_pretrain["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaplus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
+                # fig.text(position=pos, text=f'r^2:{eve_perf_pretrain["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                # fig.text(position=pos, text=f'g:{eve_perf_pretrain["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,6]): #with deformation and pretrain inundation error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
@@ -411,13 +412,13 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
                 pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
-                filter = ~np.isnan(error_pretrain) 
-                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_pretrain[filter],style='s0.01c',cmap = True,projection='M6c')
+                filter = ~np.isnan(error_sigmaplus) 
+                fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_pretrain[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
-                fig.text(position=pos, text=f'min:{np.nanmin(error_pretrain[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-        fig.savefig(f'{MLDir}/model/{reg}/compare/Compare_TPE_{train_size}_{reg}_{str(eve)}_pygmt.png',dpi=300)
+                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaplus[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
+                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaplus[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+        fig.savefig(f'{MLDir}/model/{reg}/multifoldMC/compare/Compare_TPE_{train_size}_{reg}_{str(eve)}_pygmt.png',dpi=300)
 else:
     print('Error: Invalid mode')
 
