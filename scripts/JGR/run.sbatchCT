@@ -9,7 +9,7 @@
 # #SBATCH --nodelist=cn07
 #SBATCH -p gpuq # partition
 #SBATCH --gres=gpu:1 # number of GPUs
-#SBATCH --nodelist=gp01
+#SBATCH --nodelist=gp02
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 
@@ -88,9 +88,9 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # done
 
 #For comparison plots
-# conda deactivate
-# conda activate rioxarray_env
-# python 06_compare_depths.py CT compare_pygmt 1658 892
+conda deactivate
+conda activate rioxarray_env
+python 06_compare_depths.py CT compare_pygmt 1658 892 0
 # python 06_compare_depths.py CT compare 1658 892 0
 
 #Grid calculation and other checks only use model with 1658 events mean prediction
@@ -105,7 +105,7 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # python 08_calcPTHA.py CT emulator_rate 1658 892
 # python 08_calcPTHA.py CT emulator_sigma 1658 892  
 
-python 08_calcPTHA.py CT emulator_rate 529 892
+# python 08_calcPTHA.py CT emulator_rate 529 892
 
 #stop nvidia-smi logging
 # killall nvidia-smi
