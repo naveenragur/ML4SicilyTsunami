@@ -26,11 +26,22 @@ np.random.seed(0)
 
 def calculate_error(true, pred):
         # Set NaN for rows where count_test is less than 1
+        true[true<0.1]=0
+        pred[pred<0.1]=0
         error1 = true - pred
         error2 = pred - true
         error = np.where(np.abs(error1) < np.abs(error2), error1, -error2)
-        error = np.where((error < 0.1) & (error > -0.1), np.nan, error)
+        # error = np.where((error < 0.1) & (error > -0.1), np.nan, error)
         return error
+
+def Gfit_r2(obs, pred): #a normalized least-squares
+    obs = np.array(obs)
+    pred = np.array(pred)
+    obs[obs<0.2]=0
+    pred[pred<0.2]=0
+    Gvalue = 1 - (2*np.sum(obs*pred)/(np.sum(obs**2)+np.sum(pred**2)))
+    r2 = 1 - (np.sum((obs - pred) ** 2) / np.sum((obs - np.mean(obs)) ** 2))
+    return Gvalue,r2
 
 # plotting the below events
 ids = [
@@ -92,11 +103,11 @@ true_depths = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/m
 pred_depths_mean = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/pred_d_{train_size}_direct.npy')
 eve_perf_mean = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
 
-pred_depths_sigmaplus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_minus_{train_size}_direct.npy')
-# eve_perf_sigmaplus = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+pred_depths_sigmaminus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_minus_{train_size}_direct.npy')
+# eve_perf_sigmaplus = 
 
-pred_depths_sigmaminus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_plus_{train_size}_direct.npy')
-# eve_perf_sigmaminus = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/out/model_coupled_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')            
+pred_depths_sigmaplus = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/{reg}/multifoldMC/PTHA/sigma_plus_{train_size}_direct.npy')
+# eve_perf_sigmaminus =         
 
 eve_id = np.loadtxt('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/events/sample_events53550.txt',dtype='str')   
 #inundation attributes
@@ -270,10 +281,13 @@ elif mode == 'compare_pygmt':
         pred_sigmaplus=pred_depths_sigmaplus[eve]/100
         true=true_depths[eve]/100
     
-        #calculate errors
+        #calculate errors and metrics
         error_mean = calculate_error(true, pred_mean)
         error_sigmaminus = calculate_error(true, pred_sigmaminus)
         error_sigmaplus = calculate_error(true, pred_sigmaplus)
+        
+        g_sigmaminus, r2_sigmaminus = Gfit_r2(true, pred_sigmaminus)
+        g_sigmaplus, r2_sigmaplus = Gfit_r2(true, pred_sigmaplus)
 
         #remove micro depths for better visualization
         pred_mean= np.where(pred_mean < 0.1, np.nan, pred_mean)
@@ -336,7 +350,7 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.text(position=pos, text=f'max:{np.nanmax(true):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
                 # fig.colorbar(cmap=True, position="JBC+o0/1c+w10c/0.5c+h",frame=["a2","x+lDepth", "y+lm"])
-            with fig.set_panel(panel=[0,1]): #nodeform inundation depth
+            with fig.set_panel(panel=[0,1]): #mean depth
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
@@ -350,7 +364,7 @@ elif mode == 'compare_pygmt':
                 fig.text(position=pos, text=f'max:{np.nanmax(pred_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
                 fig.text(position=pos, text=f'r^2:{eve_perf_mean["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
                 fig.text(position=pos, text=f'g:{eve_perf_mean["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
-            with fig.set_panel(panel=[0,2]): #nodeform inundation error
+            with fig.set_panel(panel=[0,2]): #mean error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
@@ -364,7 +378,7 @@ elif mode == 'compare_pygmt':
                 fig.text(position=pos, text=f'max:{np.nanmax(error_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
                 fig.text(position=pos, text=f'min:{np.nanmin(error_mean[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
                 # fig.colorbar(cmap=True, position="JBC+o0/1c+w10c/0.5c+h",frame=["a2","x+lError", "y+lm"])
-            with fig.set_panel(panel=[0,3]): #with deformation inundation depth
+            with fig.set_panel(panel=[0,3]): #mean-2sigma depth
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
@@ -376,9 +390,9 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
                 fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                # fig.text(position=pos, text=f'r^2:{eve_perf_direct["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                # fig.text(position=pos, text=f'g:{eve_perf_direct["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
-            with fig.set_panel(panel=[0,4]): #with deformation inundation error
+                fig.text(position=pos, text=f'r^2:{r2_sigmaminus:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'g:{g_sigmaminus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+            with fig.set_panel(panel=[0,4]): #mean-2sigma error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
@@ -391,7 +405,7 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
                 fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaminus[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
                 fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-            with fig.set_panel(panel=[0,5]): #with deformation and pretrain inundation depth
+            with fig.set_panel(panel=[0,5]): #mean+2sigma depth
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
@@ -403,9 +417,9 @@ elif mode == 'compare_pygmt':
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
                 fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaplus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                # fig.text(position=pos, text=f'r^2:{eve_perf_pretrain["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                # fig.text(position=pos, text=f'g:{eve_perf_pretrain["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
-            with fig.set_panel(panel=[0,6]): #with deformation and pretrain inundation error
+                fig.text(position=pos, text=f'r^2:{r2_sigmaplus:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'g:{g_sigmaplus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+            with fig.set_panel(panel=[0,6]): #mean+2sigma error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')

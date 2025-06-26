@@ -97,8 +97,8 @@ if mode == 'PTHA_rate':
     eve_def = eve_perf['max_absdz']>= 0.1
     eve_nodef = eve_perf['max_absdz']< 0.1
     true_d = np.load(f'{MLDir}/model/{reg}/multifoldMC/PTHA/true_d_53550.npy')
-    # rate = eve_perf['mean_prob'].to_numpy()
-    rate = eve_rate['P84'].to_numpy()
+    rate = eve_perf['mean_prob'].to_numpy()
+    # rate = eve_rate['Pmean'].to_numpy()
     
     for select_pt in range(nflood_grids): #nflood_grids
         #compute exceedance rate for true
@@ -124,13 +124,14 @@ elif mode == 'emulator_rate':
     if not os.path.exists(f'{MLDir}/model/{reg}/multifoldMC/PTHA'):
         os.makedirs(f'{MLDir}/model/{reg}/multifoldMC/PTHA')
 
-    # RP_list = [1/100,1/1000,1/10000,1/100000,1/1000000]
-    # Depth_list = [20,100,300,500,1000]
+    RP_list = [1/100,1/1000,1/10000,1/100000,1/1000000]
+    Depth_list = [20,100,300,500,1000]
     # RP_list = [1/2500, 1/10000, 1/100000]
-    Depth_list = [20]
+    # Depth_list = [20]
     
     #load data
     eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+    eve_rate = pd.read_csv(f'{MLDir}/resources/processed/all_eventsBS_PS53550_perce_rates.txt')
     flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     nflood_grids = np.count_nonzero(flood_mask)
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -149,25 +150,26 @@ elif mode == 'emulator_rate':
     eve_def = eve_perf['max_absdz']>= 0.1
     eve_nodef = eve_perf['max_absdz']< 0.1
     rate = eve_perf['mean_prob'].to_numpy()
+    # rate = eve_rate['Pmean'].to_numpy()
 
     for select_pt in range(nflood_grids): #nflood_grids
         #compute exceedance rate for true
         if select_pt % 50000 == 0:
             print(f'Processing point {select_pt}')
         PTHA_table_pred[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[:,select_pt], rate)
-        # PTHA_depth_pred[select_pt,:] = single_exceedance_depth(RP_list, pred_d[:,select_pt], rate)
-        # PTHA_table_pred_def[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[eve_def,select_pt], rate[eve_def])
-        # PTHA_depth_pred_def[select_pt,:] = single_exceedance_depth(RP_list, pred_d[eve_def,select_pt], rate[eve_def])
-        # PTHA_table_pred_nodef[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[eve_nodef,select_pt], rate[eve_nodef])
-        # PTHA_depth_pred_nodef[select_pt,:] = single_exceedance_depth(RP_list, pred_d[eve_nodef,select_pt], rate[eve_nodef])
+        PTHA_depth_pred[select_pt,:] = single_exceedance_depth(RP_list, pred_d[:,select_pt], rate)
+        PTHA_table_pred_def[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[eve_def,select_pt], rate[eve_def])
+        PTHA_depth_pred_def[select_pt,:] = single_exceedance_depth(RP_list, pred_d[eve_def,select_pt], rate[eve_def])
+        PTHA_table_pred_nodef[select_pt,:] = single_exceedance_rate(Depth_list, pred_d[eve_nodef,select_pt], rate[eve_nodef])
+        PTHA_depth_pred_nodef[select_pt,:] = single_exceedance_depth(RP_list, pred_d[eve_nodef,select_pt], rate[eve_nodef])
        
     # save PTHA tables
     np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHArate_{train_size}.npy',PTHA_table_pred)
-    # np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_{train_size}.npy',PTHA_depth_pred)
-    # np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHArate_def_{train_size}.npy',PTHA_table_pred_def)
-    # np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_def_{train_size}.npy',PTHA_depth_pred_def)
-    # np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHArate_nodef_{train_size}.npy',PTHA_table_pred_nodef)
-    # np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_nodef_{train_size}.npy',PTHA_depth_pred_nodef)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_{train_size}.npy',PTHA_depth_pred)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHArate_def_{train_size}.npy',PTHA_table_pred_def)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_def_{train_size}.npy',PTHA_depth_pred_def)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHArate_nodef_{train_size}.npy',PTHA_table_pred_nodef)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/pred_PTHAdepth_nodef_{train_size}.npy',PTHA_depth_pred_nodef)
 
 elif mode == 'emulator_sigma':
     #check if PTHA directory exists
@@ -179,6 +181,7 @@ elif mode == 'emulator_sigma':
     
     #load data
     eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+    eve_rate = pd.read_csv(f'{MLDir}/resources/processed/all_eventsBS_PS53550_perce_rates.txt')
     flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
     nflood_grids = np.count_nonzero(flood_mask)
     zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
@@ -203,7 +206,8 @@ elif mode == 'emulator_sigma':
     
     eve_def = eve_perf['max_absdz']>= 0.1
     eve_nodef = eve_perf['max_absdz']< 0.1
-    rate = eve_perf['mean_prob'].to_numpy()
+    # rate = eve_perf['mean_prob'].to_numpy()
+    rate = eve_rate['Pmean'].to_numpy()
 
     #minus sigma
     for select_pt in range(nflood_grids): #nflood_grids
@@ -252,9 +256,49 @@ elif mode == 'emulator_sigma':
     np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/plussigma_PTHArate_nodef_{train_size}.npy',PTHA_table_pred_nodef)
     np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/plussigma_PTHAdepth_nodef_{train_size}.npy',PTHA_depth_pred_nodef)
     
+elif mode == 'importance_sampling':
+    #check if PTHA directory exists
+    if not os.path.exists(f'{MLDir}/model/{reg}/multifoldMC/PTHA'):
+        os.makedirs(f'{MLDir}/model/{reg}/multifoldMC/PTHA')
 
+    RP_list = [1/100,1/1000,1/10000,1/100000,1/1000000]
+    Depth_list = [20,100,300,500,1000]
+    
+    #load data
+    eve_perf = pd.read_csv(f'{MLDir}/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined.csv')
+    eve_sample_rate = pd.read_csv(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/info/event_rates_mean3000_{reg}.csv')
+    flood_mask = ~np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
+    nflood_grids = np.count_nonzero(flood_mask)
+    zero_mask = np.load(f'{MLDir}/data/processed/zero_mask_{reg}_{mask_size}.npy')
+    index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.txt')
+    index_map.columns = ['m','n','lat','lon'] #add column names
+    
+    true_d = np.load(f'{MLDir}/model/{reg}/multifoldMC/PTHA/true_d_53550.npy')
+    true_d[true_d<0] = 0
+    PTHA_table_pred = np.zeros((nflood_grids,len(Depth_list)))
+    PTHA_depth_pred = np.zeros((nflood_grids,len(Depth_list)))
+    
+    eve_def = eve_perf['max_absdz']>= 0.1
+    eve_nodef = eve_perf['max_absdz']< 0.1
+    # rate = eve_perf['mean_prob'].to_numpy()
+    eve_perf['Pmean'] = eve_perf['eve_id'].map(eve_sample_rate.set_index('eve_id')['Pmean'])
+    eve_perf['Pmean'] = eve_perf['Pmean'].fillna(0)   
+    #save temporary file
+    eve_perf.to_csv(f'{MLDir}/model/{reg}/multifoldMC/out/model_direct_off[64, 128, 256]_on[16, 128, 128]_{train_size}_compile_combined_rates.csv', index=False)
+    rate = eve_perf['Pmean'].to_numpy()
+    #event rows with non zero rate that are picked from importance sampling
+    non_null_rows = np.where(rate != 0)[0]
 
+    for select_pt in range(nflood_grids): #nflood_grids
+        #compute exceedance rate for true
+        if select_pt % 50000 == 0:
+            print(f'Processing point {select_pt}')
+        PTHA_table_pred[select_pt,:] = single_exceedance_rate(Depth_list, true_d[non_null_rows,select_pt], rate[non_null_rows])
+        PTHA_depth_pred[select_pt,:] = single_exceedance_depth(RP_list, true_d[non_null_rows,select_pt], rate[non_null_rows])
+       
+    # save PTHA tables
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/sis_PTHArate_{train_size}.npy',PTHA_table_pred)
+    np.save(f'{MLDir}/model/{reg}/multifoldMC/PTHA/sis_PTHAdepth_{train_size}.npy',PTHA_depth_pred)
 
 else:
     print('Error: Invalid mode')
-
