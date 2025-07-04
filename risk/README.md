@@ -16,7 +16,8 @@ The repository is organized as follows:
 │   └── hazard_prep.ipynb
 ├── loss
 │   ├── log
-│   └── hazard_prep.ipynb
+│   └── job_hdf5_simulation.ini
+│   └── xxxx.ini
 ├── plots
 │   ├── configs
 │   ├── hazard_compare
