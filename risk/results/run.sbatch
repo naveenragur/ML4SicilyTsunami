@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn02
+#SBATCH --nodelist=cn08
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -44,8 +44,7 @@ cd $MLDir/risk/results/
 #For comparison plots
 # conda deactivate
 conda activate rioxarray_env
-python calc_rates.py
-
+# python calc_rates.py
 # python calc_pml_aal.py CT asset true 50
 # python calc_pml_aal.py CT asset 892 50
 # python calc_pml_aal.py CT asset 1658 50
@@ -56,6 +55,11 @@ python calc_rates.py
 # python calc_pml_aal.py CT foglio 1658 50
 # python calc_pml_aal.py CT foglio 3454 50
 # python calc_pml_aal.py CT foglio 7071 50
+
+python calc_pml_aal.py CT foglio_uncertainty true 50
+python calc_pml_aal.py CT foglio_uncertainty mean 50
+python calc_pml_aal.py CT foglio_uncertainty sigmaminus 50
+python calc_pml_aal.py CT foglio_uncertainty sigmaplus 50
 
 # finished commands
 echo ...........

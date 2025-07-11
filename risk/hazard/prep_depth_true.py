@@ -6,7 +6,7 @@ import dask.array as da
 ####################################
 
 #Load the NumPy file using Dask, and specify chunk size
-true_d = np.load('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/PTHA/true_d_53550.npy')
+true_d = np.load('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/multifoldMC/PTHA/true_d_53550.npy')
 num_events, num_sites = true_d.shape
 
 #Flatten the true_d array and filter non zero depths using Dask
