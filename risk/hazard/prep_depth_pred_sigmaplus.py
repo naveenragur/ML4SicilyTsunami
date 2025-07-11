@@ -8,7 +8,7 @@ import sys
 
 #Load the NumPy file using Dask, and specify chunk size
 size =  sys.argv[1]
-pred_d = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/sigmaMC/PTHA/sigma_plus_{size}_direct.npy')
+pred_d = np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/multifoldMC/PTHA/sigma_plus_{size}_direct.npy')
 num_events, num_sites = pred_d.shape
 
 #Flatten the pred_d array and filter non zero depths using Dask

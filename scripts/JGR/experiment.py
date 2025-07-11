@@ -95,17 +95,12 @@ def config():
 
     # Define hyperparameters and training configurations
     lr = 0.0035
-    lr_on = 0.0025
-    lr_deform = 0.0025
-    lr_couple = 0.005
 
     es_gap = 200
     step_size = 300
     gamma = 0.9
     
     batch_size = 300
-    batch_size_on = 300
-    batch_size_deform = 100
     nepochs = 3500
     folds = 4 #sets the split between train and test 0.75:0.25
 

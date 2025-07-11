@@ -125,7 +125,7 @@ if mode == 'asset':
 
 elif mode == 'foglio':
     #load data
-    event_info = pd.read_csv('3_event_info_foglio_loss.csv',header=0)
+    event_info = pd.read_csv('3_event_info_foglio_loss.csv',header=0) 
     loss = pd.read_csv(f'2_foglio_event_loss_{train_size}.csv',header=0)
     asset_id = pd.read_csv('0_foglio_keys.csv',header=0)
     exposure = pd.read_csv(f'{MLDir}/risk/exposure/Admin_units/foglio_values.csv',header=0)
@@ -172,6 +172,57 @@ elif mode == 'foglio':
     log_table = pd.DataFrame(log_table)
     log_table.columns = ['agg_id','foglio_id','value','event_count']
     log_table.to_csv(f'{MLDir}/risk/results/risk_calc/6_log_table_{mode}_{train_size}.csv',index=False)
+
+
+elif mode == 'foglio_uncertainty':
+    #load data
+    event_info = pd.read_csv('3_event_info_foglio_loss_uncertainty.csv',header=0) #uncertainty added for specific run 040725 remove for original calculation in thesis
+    loss = pd.read_csv(f'2_foglio_event_loss_{train_size}.csv',header=0)
+    asset_id = pd.read_csv('0_foglio_keys.csv',header=0)
+    exposure = pd.read_csv(f'{MLDir}/risk/exposure/Admin_units/foglio_values.csv',header=0)
+
+    #prepare PML and AAL table for saving loss calculations
+    ncol = 3 + len(PoE) #agg_id, IDAG, value, PoE1 loss to PoE22 loss
+    nrows = len(asset_id)
+    PML_table = np.zeros((nrows,ncol), dtype=object) #agg_id, foglio_id, value, PoE1 loss to PoE22 loss x n-assets
+    AAL_table = np.zeros((nrows,4), dtype=object) #agg_id, foglio_id, value, AAL x n-assets
+    log_table = np.zeros((nrows,4), dtype=object) #agg_id, foglio_id, value, count of loss events
+
+    for i in range(nrows):
+        if i % 100 == 0:
+            print(f'Foglio {i}',asset_id.foglio_id[i])
+        asset_loss = loss[loss['agg_id'] == asset_id.agg_id[i]]
+        asset_loss = asset_loss.assign(mean_prob=asset_loss['event_id'].apply(lambda x: event_info.loc[x]['mean_prob']))
+        asset_value = exposure[exposure['Foglio'] == asset_id.foglio_id[i]]['Value'].values[0]
+        
+        #fill asset info
+        PML_table[i,0] = asset_id.agg_id[i]
+        PML_table[i,1] = asset_id.foglio_id[i]
+        PML_table[i,2] = asset_value
+        AAL_table[i,0] = asset_id.agg_id[i]
+        AAL_table[i,1] = asset_id.foglio_id[i]
+        AAL_table[i,2] = asset_value
+        log_table[i,0] = asset_id.agg_id[i]
+        log_table[i,1] = asset_id.foglio_id[i]
+        log_table[i,2] = asset_value
+        log_table[i,3] = len(asset_loss['loss']>min_loss)
+        
+        # fill PML values, if loss events for the asset
+        if len(asset_loss) != 0:
+            pml_aal = get_loss_pml(asset_loss['loss'],asset_loss['mean_prob'],min_loss,PoE,asset_value)
+            PML_table[i,3:],AAL_table[i,3] = pml_aal[1],pml_aal[3]
+    
+    PML_table = pd.DataFrame(PML_table)
+    PML_table.columns = ['agg_id','foglio_id','value'] + [f'PoE{i}' for i in range(len(RP))]
+    PML_table.to_csv(f'{MLDir}/risk/results/risk_calc/4_PML_table_{mode}_{train_size}_uncertainity.csv',index=False)
+    
+    AAL_table = pd.DataFrame(AAL_table)
+    AAL_table.columns = ['agg_id','foglio_id','value','AAL']
+    AAL_table.to_csv(f'{MLDir}/risk/results/risk_calc/5_AAL_table_{mode}_{train_size}_uncertainity.csv',index=False)
+
+    log_table = pd.DataFrame(log_table)
+    log_table.columns = ['agg_id','foglio_id','value','event_count']
+    log_table.to_csv(f'{MLDir}/risk/results/risk_calc/6_log_table_{mode}_{train_size}_uncertainity.csv',index=False)
 
 elif mode == 'const':
         #load data
