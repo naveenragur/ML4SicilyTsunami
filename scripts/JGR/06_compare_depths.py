@@ -318,8 +318,8 @@ elif mode == 'compare_pygmt':
         xmin = grid['x'].min().values
         xmax = grid['x'].max().values
         #common color maps
-        cptfile_bathy = '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/PaperIIPlots/PaperI/r2/bathy_error.cpt' 
-        cptfile_error = '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/PaperIIPlots/PaperI/r2/bathy_error.cpt'                 
+        cptfile_bathy = '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/JGR/plots/extra/bathy_error.cpt'
+        cptfile_error = '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/scripts/JGR/plots/extra/depth_error.cpt'             
         
         #pygmt plot
         fig = pygmt.Figure()
@@ -356,7 +356,7 @@ elif mode == 'compare_pygmt':
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
+                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=50,reverse = False,background=True)              
                 filter = ~np.isnan(pred_mean) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
@@ -366,11 +366,11 @@ elif mode == 'compare_pygmt':
                 fig.text(position=pos, text=f'g:{eve_perf_mean["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,2]): #mean error
                 #basemap
-                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
+                cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
+                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False,transparency=50)
                 filter = ~np.isnan(error_mean) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
@@ -384,7 +384,7 @@ elif mode == 'compare_pygmt':
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
+                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=50,reverse = False,background=True)              
                 filter = ~np.isnan(pred_sigmaminus) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
@@ -394,11 +394,11 @@ elif mode == 'compare_pygmt':
                 fig.text(position=pos, text=f'g:{g_sigmaminus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,4]): #mean-2sigma error
                 #basemap
-                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
+                cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
+                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False,transparency=50,)
                 filter = ~np.isnan(error_sigmaminus) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
@@ -411,7 +411,7 @@ elif mode == 'compare_pygmt':
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=0,reverse = False,background=True)              
+                pygmt.makecpt(cmap="berlin", series=[0.1,10,0.5],transparency=50,reverse = False,background=True)              
                 filter = ~np.isnan(pred_sigmaplus) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
@@ -421,11 +421,11 @@ elif mode == 'compare_pygmt':
                 fig.text(position=pos, text=f'g:{g_sigmaplus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
             with fig.set_panel(panel=[0,6]): #mean+2sigma error
                 #basemap
-                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False)
+                cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
                 fig.grdimage(grid['z'], cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid['z'], levels=10, pen='0.5p,white', limit=[-100, 0],projection='M6c')
                 #parameter     
-                pygmt.makecpt(cmap="polar+h0", transparency=0,series=[-5,5,0.5],background=True)
+                cmap = pygmt.makecpt(cmap=cptfile_error,continuous=False,transparency=50,)
                 filter = ~np.isnan(error_sigmaplus) 
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)

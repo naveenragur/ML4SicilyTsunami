@@ -88,9 +88,9 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # done
 
 #For comparison plots
-# conda deactivate
-# conda activate rioxarray_env
-# python 06_compare_depths.py CT compare_pygmt 1658 892 0
+conda deactivate
+conda activate rioxarray_env
+python 06_compare_depths.py CT compare_pygmt 1658 892 0
 # python 06_compare_depths.py CT compare 1658 892 0
 
 #Grid calculation and other checks only use model with 1658 events mean prediction
@@ -100,11 +100,11 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # python 07_calcPerfGrid.py CT misfit 1658 892 #For misfit plots - calculate for all events at all grids
 
 #For plotting PTHA maps for true and depths
-echo "Calculating PTHA maps for reference and emulation depths"
+# echo "Calculating PTHA maps for reference and emulation depths"
 # python 08_calcPTHA.py CT importance_sampling 1658 892  
 # python 08_calcPTHA.py CT PTHA_rate 1658 892
 # python 08_calcPTHA.py CT emulator_rate 1658 892
-python 08_calcPTHA.py CT emulator_sigma 1658 892  
+# python 08_calcPTHA.py CT emulator_sigma 1658 892  
 
 
 # python 08_calcPTHA.py CT emulator_rate 529 892

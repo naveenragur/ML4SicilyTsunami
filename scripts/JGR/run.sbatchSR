@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
 #SBATCH --partition=cpuq
-#SBATCH --nodelist=cn05
+#SBATCH --nodelist=cn02
 # #SBATCH -p gpuq # partition
 # #SBATCH --gres=gpu:1 # number of GPUs
 # #SBATCH --nodelist=gp02
@@ -88,9 +88,9 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # done
 
 #For comparison plots
-# conda deactivate
-# conda activate rioxarray_env
-# python 06_compare_depths.py SR compare_pygmt 1773 961 0
+conda deactivate
+conda activate rioxarray_env
+python 06_compare_depths.py SR compare_pygmt 1773 961 0
 # python 06_compare_depths.py SR compare 1773 961 0
 
 #Grid calculation and other checks only use model with 1773 events mean prediction
@@ -100,11 +100,11 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 # python 07_calcPerfGrid.py SR misfit 1773 961 #For misfit plots - calculate for all events at all grids
 
 #For plotting PTHA maps for true and depths
-echo "Calculating PTHA maps for reference and emulation depths"
+# echo "Calculating PTHA maps for reference and emulation depths"
 # python 08_calcPTHA.py SR importance_sampling 1773 961  
 # python 08_calcPTHA.py SR PTHA_rate 1773 961
 # python 08_calcPTHA.py SR emulator_rate 1773 961
-python 08_calcPTHA.py SR emulator_sigma 1773 961  
+# python 08_calcPTHA.py SR emulator_sigma 1773 961  
 
 # finished commands
 echo ...........
