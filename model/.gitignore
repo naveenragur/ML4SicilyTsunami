@@ -16,6 +16,8 @@ sigmaGNLL*
 */multifoldMC/out/*.pt
 */multifoldMC/out/*.npy
 */multifoldMC/PTHA/*
+*/multifoldMC/compare/*.png
+*/multifoldMC/compare/*/*.png
 
 CT/out/*.pt
 CT/out/*.npy

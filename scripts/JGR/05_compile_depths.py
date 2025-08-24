@@ -1,5 +1,5 @@
 #Description: Postprocess the predicted mean and sigma depths into int format and save them as numpy arrays
-#Usage: python 05_compile_depths.py <region> <task> <train/test> <mask size>
+#Usage: python 05_compile_depths.py <region> <task> <train size> <mask size>
 import os
 import sys
 os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
@@ -13,7 +13,7 @@ try:
     reg = sys.argv[1] #CT or SR
     task = sys.argv[2] #reprocess or post
     train_size = sys.argv[3] #eventset size used for training
-    mask_size = sys.argv[4] #eventset size used for testing
+    mask_size = sys.argv[4] #eventset size used for mask 
 except:
     raise Exception("*** Must first set environment variable")
 

@@ -1,5 +1,5 @@
 #Description: Plot depth predictions and errors for different models for a given event
-#Usage: python 06_compare_depths.py <region> <task> <train/test> <mask size>
+#Usage: python 06_compare_depths.py <region> <task> <train size> <mask size> <start at>
 import os
 import sys
 os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
@@ -9,6 +9,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import pygmt
+import gc
 
 try:
     MLDir = os.getenv('MLDir')
@@ -118,12 +119,23 @@ idx= np.load(f'/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/data/processed/lat_lon
 index_map = pd.read_csv(f'{MLDir}/data/processed/lat_lon_idx_{reg}_{mask_size}.txt',header=None,sep=',')
 index_map.columns = ['m','n','lat','lon'] #add column names
 
+dir = ['PS_manning003', 'BS_manning003', 'PS_4-8_manning003','BS_4-8_manning003',]
+for d in dir:
+    if not os.path.exists(f'{MLDir}/model/{reg}/multifoldMC/compare/{d}/'):
+        os.makedirs(f'{MLDir}/model/{reg}/multifoldMC/compare/{d}/')
+
 if mode == 'compare':    
-    for id in ids['id']:
+    # Add progress tracking and memory management
+    total_events = len(eve_id[int(start):])
+    processed_events = 0
+    
     # for id in eve_id: #start from the begining
         # eve=32145
         # id =eve_id[eve]
     # for id in eve_id[int(start):]: #start from a given event 
+    # for id in ids:
+    #     eve = np.where(eve_id==id)[0][0]
+    for id in eve_id[int(start):]: #start from a given event 
         eve = np.where(eve_id==id)[0][0]
         print(id,'\n',eve)
         #read dZ file and grid location file to extract location information
@@ -200,44 +212,44 @@ if mode == 'compare':
         # Pred_mean
         PR_pretrain = axs[2].scatter(idx[:, 1], idx[:, 0], c=pred_mean, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
-        axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_mean):.3f}\nr^2: {eve_perf_mean["r2"].iloc[eve]:.3f}\ng: {eve_perf_nodeform["g"].iloc[eve]:.3f}',
+        axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_mean):.3f}\nr^2: {eve_perf_mean["r2"].iloc[eve]:.3f}\ng: {eve_perf_mean["g"].iloc[eve]:.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[2].transAxes, fontsize=12)
-        axs[2].set_title('Without Def. or Pretrain\nPrediction')
+        axs[2].set_title('Mean')
 
         # Error
         ER_pretrain = axs[3].scatter(idx[:, 1], idx[:, 0], c=error_mean, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
         axs[3].text(xpos,ypos, f'max: {np.nanmax(error_mean):.3f},\nmin: {np.nanmin(error_mean):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[3].transAxes, fontsize=12)
-        axs[3].set_title('Without Def. or Pretrain\nError')
+        axs[3].set_title('Error Mean')
 
         # Pred_sigmaminus
         PR_direct = axs[4].scatter(idx[:, 1], idx[:, 0], c=pred_sigmaminus, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
         axs[4].text(xpos,ypos, f'max: {np.nanmax(pred_sigmaminus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[4].transAxes, fontsize=12)
-        axs[4].set_title('With Def. no Pretrain\nPrediction')
+        axs[4].set_title('Mean-2Sigma')
 
         # Error
         ER_direct = axs[5].scatter(idx[:, 1], idx[:, 0], c=error_sigmaminus, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
         axs[5].text(xpos,ypos, f'max: {np.nanmax(error_sigmaminus):.3f},\nmin: {np.nanmin(error_sigmaminus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[5].transAxes, fontsize=12)
-        axs[5].set_title('With Def. no Pretrain\nError')
+        axs[5].set_title('Error Mean-2Sigma')
 
-        # Pred_pretrain
+        # Pred_sigmaplus
         PR_pretrain = axs[6].scatter(idx[:, 1], idx[:, 0], c=pred_sigmaplus, s=0.0005, cmap=cmap_depth,
                             vmin=0, vmax=10,alpha=1)
         axs[6].text(xpos,ypos, f'max: {np.nanmax(pred_sigmaplus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[6].transAxes, fontsize=12)
-        axs[6].set_title('With Def. and Pretrain\nPrediction')
+        axs[6].set_title('Mean+2Sigma')
 
         #Error
         ER_pretrain = axs[7].scatter(idx[:, 1], idx[:, 0], c=error_sigmaplus, s=0.0005, cmap=cmap_error,
                             vmin=-5,vmax=5,alpha=1)
         axs[7].text(xpos,ypos, f'max: {np.nanmax(error_sigmaplus):.3f},\nmin: {np.nanmin(error_sigmaplus):.3f}',
                     horizontalalignment='center', verticalalignment='center',transform=axs[7].transAxes, fontsize=12)
-        axs[7].set_title('With Def. and Pretrain\nError')
+        axs[7].set_title('Error Mean+2Sigma')
 
         # Set axis scale as equal and add gridlines
         for ax in axs:
@@ -265,8 +277,8 @@ if mode == 'compare':
         cbar2.set_label('Error(m)', fontsize=12)
         cbar3.set_label('Local Deform.(m)', fontsize=12)
         plt.tight_layout()
-        plt.savefig(f'{MLDir}/model/{reg}/compare/{id}_{train_size}_{reg}_{str(eve)}.png',
-                    dpi=100, bbox_inches='tight', pad_inches=0.1)
+        plt.savefig(f'{MLDir}/model/{reg}/multifoldMC/compare/{id}_{train_size}_{reg}_{str(eve)}.png',
+                    dpi=50, bbox_inches='tight', pad_inches=0.1)
         #close figure
         plt.clf()
         plt.close(fig)
@@ -304,14 +316,20 @@ elif mode == 'compare_pygmt':
             subsize = ["7c","18c"]
             pos = "TL"
             font = "18p,Helvetica-Bold,black"
+            offset = "0.15/-0.1"
+            offset_r2 = "0.15/-0.6"
+            offset_g = "0.15/-1.1"
         elif reg == 'SR':
             fig, axs = plt.subplots(1, 8, figsize=(19,3))
             cbar_ht = 0.04
             # Load the elevation from netcdf grid
             grid = xr.open_dataset('../../data/processed/SR_defbathy.nc',engine='netcdf4')
             subsize = ["6c","5.5c"]
-            pos = "TL"
-            font = "16p,Helvetica-Bold,black"
+            pos = "BL"
+            font = "14p,Helvetica-Bold,black"
+            offset = "0.15/1.1"
+            offset_r2 = "0.15/0.6"
+            offset_g = "0.15/.1"
         #get lat long limits from the grid
         ymin = grid['y'].min().values
         ymax = grid['y'].max().values
@@ -348,7 +366,7 @@ elif mode == 'compare_pygmt':
                 grid_depth = pygmt.xyz2grd(x=index_map['lon'], y=index_map['lat'], z=fill, spacing='1s', region=[xmin,xmax,ymin,ymax])
                 # fig.grdimage(grid_depth, cmap=True, shading=True,region=[xmin,xmax,ymin,ymax],projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
-                fig.text(position=pos, text=f'max:{np.nanmax(true):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
+                fig.text(position=pos, text=f'max:{np.nanmax(true):.3f}',font=font,projection='M6c',offset=offset)
                 # fig.colorbar(cmap=True, position="JBC+o0/1c+w10c/0.5c+h",frame=["a2","x+lDepth", "y+lm"])
             with fig.set_panel(panel=[0,1]): #mean depth
                 #basemap
@@ -361,9 +379,9 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{eve_perf_mean["r2"].iloc[eve]:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{eve_perf_mean["g"].iloc[eve]:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_mean[filter]):.3f}',font=font,offset=offset,projection='M6c')
+                fig.text(position=pos, text=f'r^2:{eve_perf_mean["r2"].iloc[eve]:.3f}',font=font,offset=offset_r2,projection='M6c')
+                fig.text(position=pos, text=f'g:{eve_perf_mean["g"].iloc[eve]:.3f}',font=font,offset=offset_g,projection='M6c')
             with fig.set_panel(panel=[0,2]): #mean error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
@@ -375,8 +393,8 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_mean[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_mean[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'min:{np.nanmin(error_mean[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(error_mean[filter]):.3f}',font=font,offset=offset,projection='M6c')
+                fig.text(position=pos, text=f'min:{np.nanmin(error_mean[filter]):.3f}',font=font,offset=offset_r2,projection='M6c')
                 # fig.colorbar(cmap=True, position="JBC+o0/1c+w10c/0.5c+h",frame=["a2","x+lError", "y+lm"])
             with fig.set_panel(panel=[0,3]): #mean-2sigma depth
                 #basemap
@@ -389,9 +407,9 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{r2_sigmaminus:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{g_sigmaminus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaminus[filter]):.3f}',font=font,offset=offset,projection='M6c')
+                fig.text(position=pos, text=f'r^2:{r2_sigmaminus:.3f}',font=font,offset=offset_r2,projection='M6c')
+                fig.text(position=pos, text=f'g:{g_sigmaminus:.3f}',font=font,offset=offset_g,projection='M6c')
             with fig.set_panel(panel=[0,4]): #mean-2sigma error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
@@ -403,8 +421,8 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaminus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaminus[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
-                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaminus[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaminus[filter]):.3f}',font=font,projection='M6c',offset=offset)
+                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaminus[filter]):.3f}',font=font,offset=offset_r2,projection='M6c')
             with fig.set_panel(panel=[0,5]): #mean+2sigma depth
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
@@ -416,9 +434,9 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=pred_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaplus[filter]):.3f}',font=font,offset="0.15/-0.1",projection='M6c')
-                fig.text(position=pos, text=f'r^2:{r2_sigmaplus:.3f}',font=font,offset="0.15/-0.6",projection='M6c')
-                fig.text(position=pos, text=f'g:{g_sigmaplus:.3f}',font=font,offset="0.15/-1.1",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(pred_sigmaplus[filter]):.3f}',font=font,offset=offset,projection='M6c')
+                fig.text(position=pos, text=f'r^2:{r2_sigmaplus:.3f}',font=font,offset=offset_r2,projection='M6c')
+                fig.text(position=pos, text=f'g:{g_sigmaplus:.3f}',font=font,offset=offset_g,projection='M6c')
             with fig.set_panel(panel=[0,6]): #mean+2sigma error
                 #basemap
                 cmap = pygmt.makecpt(cmap=cptfile_bathy,continuous=False)
@@ -430,8 +448,8 @@ elif mode == 'compare_pygmt':
                 fig.plot(x=index_map['lon'][filter], y=index_map['lat'][filter],fill=error_sigmaplus[filter],style='s0.01c',cmap = True,projection='M6c')
                 fig.grdcontour(grid_depth, levels=[1], pen='0.75p,red', limit=[0,10],projection='M6c',cut=10)
                 fig.grdcontour(grid=grid['z'], levels=1,limit=[-0.5, 0.5],annotation=False,projection='M6c',pen='0.5p,black')
-                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaplus[filter]):.3f}',font=font,projection='M6c',offset="0.15/-0.1")
-                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaplus[filter]):.3f}',font=font,offset="0.15/-0.6",projection='M6c')
+                fig.text(position=pos, text=f'max:{np.nanmax(error_sigmaplus[filter]):.3f}',font=font,projection='M6c',offset=offset)
+                fig.text(position=pos, text=f'min:{np.nanmin(error_sigmaplus[filter]):.3f}',font=font,offset=offset_r2,projection='M6c')
         fig.savefig(f'{MLDir}/model/{reg}/multifoldMC/compare/Compare_TPE_{train_size}_{reg}_{str(eve)}_pygmt.png',dpi=300)
 else:
     print('Error: Invalid mode')
