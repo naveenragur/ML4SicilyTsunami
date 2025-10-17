@@ -113,7 +113,7 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
                   #  epoch= '/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/SR/mse_asym_scalecu/out/model_withdeform_off[64, 128, 256]_on[16, 128, 128]_minepoch_1773.pt',#None,
                    reg_gaugeno = reg_gaugeno,
                      )
-    #used to test direct model without pretraining, only waveform as input nodeform
+    # used to test direct model without pretraining, only waveform as input nodeform
     # AE.evaluateEDSingle( 
     #               data_in=t_array,
     #               data_deformfull=dZ_array,

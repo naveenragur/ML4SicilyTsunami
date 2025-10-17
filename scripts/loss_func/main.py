@@ -2,7 +2,62 @@
 #This is where the experiment is run
 import numpy as np
 import experiment as exp
+from sklearn.linear_model import LinearRegression
 import os
+
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+def estimate_global_tweedie_p(Y, eps=1e-6):
+    """
+    Estimate Tweedie power p globally across all locations and events.
+
+    Parameters
+    ----------
+    Y : ndarray of shape (n_events, n_locations)
+        Observed inundation depths (non-negative, can include zeros)
+    eps : float
+        Small constant to avoid log(0)
+
+    Returns
+    -------
+    p : float
+        Estimated Tweedie power
+    """
+    # Flatten across events and locations
+    Y_flat = Y.ravel()  # shape: (n_events * n_locations,)
+
+    # Compute mean and variance per small block
+    # For simplicity, we can compute variance across a block of consecutive samples
+    # Here we treat the entire flattened array as one block
+    mean_y = np.mean(Y_flat) + eps
+    var_y = np.var(Y_flat, ddof=1) + eps
+
+    # For a more stable estimate, you can divide into smaller blocks
+    # Example: block_size = 1000
+    block_size = 1000
+    n_blocks = len(Y_flat) // block_size
+    means = []
+    vars_ = []
+    for i in range(n_blocks):
+        block = Y_flat[i*block_size:(i+1)*block_size]
+        m = np.mean(block) + eps
+        v = np.var(block, ddof=1) + eps
+        means.append(m)
+        vars_.append(v)
+    means = np.array(means).reshape(-1,1)
+    vars_ = np.array(vars_)
+
+    # Fit linear regression: log(var) = c + p * log(mean)
+    ols = LinearRegression(fit_intercept=True)
+    ols.fit(np.log(means), np.log(vars_))
+
+    p = ols.coef_[0]
+    c = ols.intercept_
+    print(f"Estimated global p = {p:.3f}, log(phi) = {c:.3f}")
+
+    return p
+
 
 @exp.ex.automain
 def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_size,mask_size,test_size,batch_size,batch_size_on,
@@ -79,7 +134,12 @@ def run_experiment(MLDir,reg,reg_gaugeno,GaugeNo,windowthreshold,twindow,train_s
     #               batch_size = batch_size_deform,
     #               nepochs = 300)
 
-    AE.fulltuneED(
+    #calculate global tweedie p
+    if task == 'tweedie_loss':
+        p = estimate_global_tweedie_p(red_d_array)
+        print(f'Using estimated global Tweedie p = {p:.3f} for training')
+
+    AE.retuneED(
                 job = 'withdeform', #nodeform or withdeform
                 data_in=t_array,
                 data_deformfull=dZ_array,

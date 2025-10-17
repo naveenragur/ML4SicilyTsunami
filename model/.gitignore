@@ -1,3 +1,4 @@
+backup/*
 loss_func*
 heavy*
 weighted*
@@ -7,11 +8,15 @@ bs*
 error*
 direct*
 sigmaGNLL*
+tweedie_loss*
+
+#.npy for test events
+*testsize* 
+
 
 */sigmaMC/out/*.pt
 */sigmaMC/out/*.npy
 */sigmaMC/PTHA/*
-*testsize*
 
 */multifoldMC/out/*.pt
 */multifoldMC/out/*.npy
@@ -19,17 +24,10 @@ sigmaGNLL*
 */multifoldMC/compare/*.png
 */multifoldMC/compare/*/*.png
 
-CT/out/*.pt
-CT/out/*.npy
-CT/compare/*
-CT/PTHA/*
-CT/test/*
+*/direct/out/*.pt
+*/direct/out/*.npy
+*/direct/compare/*
+*/direct/PTHA/*
+*/direct/test/*
 
-SR/out/*.pt
-SR/out/*.npy
-SR/compare/*
-SR/PTHA/*
-# SR*
-# CT*
 
-backup/*

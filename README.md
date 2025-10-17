@@ -26,20 +26,26 @@ The workflow for this project is as follows:
      - Onshore inundation characteristics (maximum depth, area, etc.)
 
 2. Splitting the Event Selection
-   - The selected events are divided into training and testing sets(75:25).
+   - The selected events are divided into training and testing sets(75:25). In ensemble learning mode, a cross validation approach is used with  4 folds shuffling across these subsets. 
 
-3. Training the ML Model
+3. Training the ML Model(Pretraining and Fine-tuning of encoder-decoder model) and prediction
    - The ML model is trained on the training set, with guidance based on the test set for hyperparameter tuning.
    - Pretraining an offshore encoder (using a large dataset, not just the limited training set)
    - Pretraining an deformation encoder (using a large dataset, not just the limited training set)
    - Training an onshore decoder using the training set(as full simulation data is limited)
    - Fine-tuning the decoder, interface, and encoder using the training set(using the limited full simulation data is limited)
+   - For the single encoder-decoder model, only one set of predictions are made on the test set. 
+   
+   Training the ML Model(Stochastic version) and prediction
+   - Here 4 encoder-decoder models are trained on each fold subsets of the training data.
+   - For the stochastic version each of the four fold model is used to generate 100 realisations on each event from the test set.
+   - The final prediction are presented with the mean and uncertainty bounds (+-2sigma) 
 
 4. Model Performance Evaluation
    - The performance of the model is assessed using the unused dataset:
      - Evaluation at control points to check misfit and bias in classification of flooding
      - Evaluation at all inundation locations (using a single goodness-of-fit metric) and for subsets of different types
-     - Evaluation for events of specific magnitude,source, locations and tsunami parameters as maps and boxplots
+     - Evaluation for events of specific magnitude, source, locations and tsunami parameters as maps and boxplots
      - Evaluation for results with different training approaches, training sizes
 
 5. Model Application

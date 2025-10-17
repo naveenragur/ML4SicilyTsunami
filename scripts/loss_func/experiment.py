@@ -1387,6 +1387,42 @@ class BuildTsunamiAE():
         print('loss', loss1, loss2)
         return loss1 + loss2
     
+    def tweedie_loss(self, recon, true, power=1.1):
+        """
+        Tweedie deviance loss function.
+
+        Parameters:
+        recon (tensor): Predicted values (must be > 0).
+        true (tensor): Target values (must be >= 0).
+        power (float): Tweedie power parameter.
+                    0   -> Normal
+                    1   -> Poisson
+                    2   -> Gamma
+                    1<p<2 -> Compound Poisson-Gamma
+
+        Returns:
+        tensor: Computed Tweedie loss.
+        """
+        p = power
+        eps = 1e-8  # to avoid division by zero / log(0)
+        recon = torch.clamp(recon, min=eps)
+        true = torch.clamp(true, min=eps)
+
+        if p == 0:  # Normal
+            dev = (true - recon) ** 2
+        elif p == 1:  # Poisson
+            dev = 2 * (true * torch.log(true / recon + eps) - true + recon)
+        elif p == 2:  # Gamma
+            dev = 2 * (torch.log(recon / true + eps) + true / recon - 1)
+        else:  # General Tweedie
+            dev = 2 * (
+                (true ** (2 - p)) / ((1 - p) * (2 - p))
+                - true * (recon ** (1 - p)) / (1 - p)
+                + (recon ** (2 - p)) / (2 - p)
+            )
+
+        return torch.mean(dev)
+ 
     @ex.capture    
     def mc_dropout_inference(self,control_points,trained_model, wave_input, deform_input, num_samples=50):
         """
@@ -1838,6 +1874,8 @@ class BuildTsunamiAE():
             self.criterion = self.mse_asymmetric_pwnorm
         elif loss_type == 'mse_asym_error':
             self.criterion = self.mse_asymmetric_error
+        elif loss_type == 'tweedie_loss':
+            self.criterion = self.tweedie_loss
         elif loss_type == None:
             print('using default loss function MSELoss')     
 
@@ -1944,6 +1982,167 @@ class BuildTsunamiAE():
         #logging
         ex.log_scalar(f'min_loss_{self.job}/', self.min_loss)
         ex.log_scalar(f'min_epoch_{self.job}/', self.min_epoch) 
+
+    @ex.capture #build the direct encoder-decoder model without pretraining
+    def retuneED(self,
+            job,
+            data_in, #training data offshore
+            data_deformfull, #training data deformation
+            data_out, #training data offshore
+            split, #test data onshore
+            batch_size, #batch size onshore
+            nepochs,
+            lr,
+            channels_off = [64,128,256], #channels for offshore(1DCNN)
+            channels_on = [64,64], #channels for onshore(fully connected)
+            channels_deform = [16,32,64,128], #channels for deformation(1DCNN)
+            loss_type = None,
+            z= None, #latent dim 
+            ts_dim = None, #time series dim
+            parts = None,
+            x_dim = None,
+            y_dim = None,
+            n = None,
+
+            ):
+        super().__init__()
+
+        #data
+        self.data_in = data_in
+        self.data_deformfull = data_deformfull
+        self.data_out = data_out
+
+        #model structure
+        self.ninputs = ts_dim
+        self.x_dim = x_dim
+        self.y_dim = y_dim
+        self.parts = parts
+        self.xy = n
+        
+        #hyperparameters
+        self.split = split
+        self.batch_size = batch_size
+        self.nepochs = nepochs
+        self.lr = lr
+
+        #model parameters/architecture
+        self.channels_off = channels_off
+        self.channels_on = channels_on
+        self.channels_deform = channels_deform
+        self.z = z
+        self.job = job #with deform or no deform
+
+        # Initialize model,criteria	and optimizer
+        self.model = torch.load('/mnt/beegfs/nragu/tsunami/ML4SicilyTsunami/model/CT/sigmaMC/out/model_withdeform_off[64, 128, 256]_on[16, 128, 128]_minepoch_1658.pt',map_location=self.device)
+        if loss_type == 'tweedie_loss':
+            self.criterion = self.tweedie_loss
+        elif loss_type == None:
+            print('using default loss function MSELoss')     
+
+        print(self.criterion)
+
+        self.model.to(self.device)
+        self.configure_optimizers()
+        self.configure_scheduler()
+
+        #load data
+        train_loader_in, val_loader_in, test_loader_in = self.get_dataloader(self.data_in) 
+        train_loader_deformfull, val_loader_deformfull, test_loader_deformfull = self.get_dataloader(self.data_deformfull) 
+        train_loader_out, val_loader_out, test_loader_out = self.get_dataloader(self.data_out) 
+        self.train_epoch_losses, self.val_epoch_losses, self.test_epoch_losses = [], [], []
+
+        # Train model
+        for epoch in range(self.nepochs):
+            if epoch == 2:
+                #calculate no of param
+                print('no of total param:',sum(p.numel() for p in self.model.parameters() if p.requires_grad))
+            train_loss, val_loss, test_loss = 0, 0, 0
+            for batch_idx,(batch_data_in,batch_data_deformfull,batch_data_out) in enumerate(zip(train_loader_in,train_loader_deformfull,train_loader_out)):
+                self.optimizer.zero_grad()
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deformfull = batch_data_deformfull[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
+                recon_data = self.model(batch_data_in,batch_data_deformfull)
+                loss = self.criterion(recon_data, batch_data_out)
+                train_loss += loss.item()
+                loss.backward()
+                self.optimizer.step()
+                self.scheduler.step()
+                    
+            for batch_idx,(batch_data_in,batch_data_deformfull,batch_data_out)  in enumerate(zip(val_loader_in,val_loader_deformfull,val_loader_out)):
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deformfull = batch_data_deformfull[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
+                recon_data = self.model(batch_data_in,batch_data_deformfull)
+                vloss = self.criterion(recon_data, batch_data_out)
+                val_loss += vloss.item()
+
+            for batch_idx,(batch_data_in,batch_data_deformfull,batch_data_out)  in enumerate(zip(test_loader_in,test_loader_deformfull,test_loader_out)):
+                batch_data_in = batch_data_in[0].to(self.device)
+                batch_data_deformfull = batch_data_deformfull[0].to(self.device)
+                batch_data_out = batch_data_out[0].to(self.device)
+                recon_data = self.model(batch_data_in,batch_data_deformfull)
+                tloss = self.criterion(recon_data, batch_data_out)
+                test_loss += tloss.item()
+
+            avg_train_ls = train_loss/len(train_loader_in)
+            avg_val_ls = val_loss/len(val_loader_in)
+            avg_test_ls = test_loss/len(test_loader_in)
+
+            #log to neptune
+            log2neptune = True
+            if log2neptune:
+                run[f'train/{self.job}/epochloss'].append(avg_train_ls)
+                run[f'val/{self.job}/epochloss'].append(avg_val_ls)
+                run[f'test/{self.job}/epochloss'].append(avg_test_ls)
+
+            if self.verbose:
+                print(f'epoch:{epoch},training loss:{avg_train_ls:.5f},val loss:{avg_val_ls:.5f},test loss:{avg_test_ls:.5f}', end='\r')
+            
+            self.train_epoch_losses.append(avg_train_ls)
+            self.val_epoch_losses.append(avg_val_ls)
+            self.test_epoch_losses.append(avg_test_ls)
+            
+            #save model a sepcific intermediate epoch
+            # if epoch % 100 == 0 :#and epoch >= 800:
+            #     torch.save(self.model, f'{self.MLDir}/model/{self.reg}/{self.task}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt')
+        
+            #overwrite epochs where val + test loss are the minimum and mark in plot below:
+            if epoch == 0:
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
+                min_epoch = epoch
+            elif (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in)) < min_loss:
+                min_loss = (val_loss + test_loss)/(len(val_loader_in)+len(test_loader_in))
+                min_epoch = epoch
+                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/{self.task}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt')
+            
+            #at last epoch
+            if epoch == self.nepochs-1:
+                print(f'epoch:{epoch},training loss:{avg_train_ls:.5f},val loss:{avg_val_ls:.5f},test loss:{avg_test_ls:.5f}', end='\r')
+                torch.save(self.model, f'{self.MLDir}/model/{self.reg}/{self.task}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_epoch_{epoch}_{self.train_size}.pt')
+
+            #early stopping
+            if epoch - min_epoch > self.es_gap:
+                print('early stopping at epoch:',epoch, 'min loss:',min_loss)
+                # torch.save(self.model, f'{self.MLDir}/model/{self.reg}/{self.task}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_estop_{epoch}_{self.train_size}.pt')
+                # ex.log_scalar(f'es_epoch_{self.job}/', min_epoch)
+                break
+        
+        self.min_epoch = min_epoch
+        self.min_loss = min_loss
+        print('min loss at epoch:',self.min_epoch, 'min loss:',self.min_loss)
+        #save model as artifact
+        ex.add_artifact(filename=f'{self.MLDir}/model/{self.reg}/{self.task}/out/model_{self.job}_off{self.channels_off}_on{self.channels_on}_minepoch_{self.train_size}.pt')
+
+        #plot and save loss as png and npy
+        self.plot_save_loss()
+        np.save(f'{self.MLDir}/model/{self.reg}/{self.task}/out/train_loss_{self.job}_{self.train_size}.npy', self.train_epoch_losses)
+        np.save(f'{self.MLDir}/model/{self.reg}/{self.task}/out/test_loss_{self.job}_{self.train_size}.npy', self.test_epoch_losses)
+
+        #logging
+        ex.log_scalar(f'min_loss_{self.job}/', self.min_loss)
+        ex.log_scalar(f'min_epoch_{self.job}/', self.min_epoch) 
+
 
     @ex.capture #build the direct encoder-decoder model without pretraining
     def fulltuneEDerror(self,

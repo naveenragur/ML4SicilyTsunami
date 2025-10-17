@@ -5,11 +5,11 @@
 #SBATCH --time=0-24:00 # time limit (D-HH:MM)
 #SBATCH --ntasks=1 # total number of tasks (jobs) across all nodes (3 nodes x 10 jobs each)
 #SBATCH --cpus-per-task=1 # number of CPU cores per task
-#SBATCH --partition=cpuq
-#SBATCH --nodelist=cn07
-# # SBATCH -p gpuq # partition
-# # SBATCH --gres=gpu:1 # number of GPUs
-# # SBATCH --nodelist=gp01
+# #SBATCH --partition=cpuq
+# #SBATCH --nodelist=cn07
+#SBATCH -p gpuq # partition
+#SBATCH --gres=gpu:1 # number of GPUs
+#SBATCH --nodelist=gp01
 #SBATCH --output ./sbatch_logs/run-%j.txt       # Standard out goes to this file
 #SBATCH --error ./sbatch_logs/error-%j.txt      # Standard err goes to this file
 
@@ -67,14 +67,15 @@ export CUDA_VISIBLE_DEVICES=0
 # done
 
 #for a quick single run
-# python main.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'task=sigmaMC' 'loss_type=mse_asym_scale' #train direct model
-# python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=0' 'task=sigmaMC' #evaluate with MC dropout
-# python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=1' 'task=sigmaMC' 
-# python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=2' 'task=sigmaMC' 
-# python error_test.py with 'reg=CT' 'train_size=225' 'mask_size=892' 'test_size=3' 'task=sigmaMC' 
+python main.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'task=tweedie_loss' 'loss_type=tweedie_loss' #train direct model
+python main_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=tweedie_loss'
+# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=0' 'task=tweedie_loss' #evaluate with MC dropout
+# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=1' 'task=tweedie_loss' 
+# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=2' 'task=tweedie_loss' 
+# python error_test.py with 'reg=CT' 'train_size=1658' 'mask_size=892' 'test_size=3' 'task=tweedie_loss' 
 
 #postprocessing to int and combining full eventset
-python 04_compile_depths.py CT sigmaMC 1658 892
+# python 04_compile_depths.py CT sigmaMC 1658 892
 
 # for train in ${train_list[@]}; do
 #     echo 'postprocessing to int and combining full eventset' $train
