@@ -1,5 +1,5 @@
-#Readme for the codebase used for the 2025 JGR:ML and Computations submission of the ML4SicilyTsunami Emulator 
-#Date: 06/05/2025
+#Readme for the codebase used for the 2025 paper submission on stochastic inundaiton emulator
+#Date: 17/10/2025
 #Author: Naveen Ragu Ramalingam (naveen.ragu@ngi.no)
 
 #Main Workflow to be followed for tsunami emulation, we use slurm  for job scheduling using sbatch run.sbatchCT and run.sbatchSR for the two regions of interest (CT and SR).
@@ -12,9 +12,18 @@
 
 4. Script train.py and test.py are used to train and test the machine learning models. The models are trained on the data prepared in the previous step. The models and predictions are saved in /models/<region>/<task>.
 
-5. 
+5. Script 05_compile_depths.py postprocesses the predicted mean and sigma depths into int format and save them as numpy arrays
+
+6. Script 06_compare_depths.py plots depth predictions and errors for different models for a given event.
+
+7. Script 07_calcPerfGrid.py calculates the performance metric at the prediction grids 
+
+8. Script 08_calcPTHA.py CT Calculates the PTHA hazard curves at all prediction points for maps and subsets of events
+
+9. Notebooks 09a_results_ML_CTerror.ipynb and 09b_results_ML_SRerror.ipynb are used collate results from emulation, make figures to evaluate prediction, compare hazard curves quickly, calculate posthoc uncertainity estimate, misfit at control points etc.
+
+10. Directory plots/ contains notebooks for plotting figures used in the manuscript and supplements
 
 #Other scripts used in the codebase but not run directly by the user
-
 checkgpu.py #This script checks if a GPU is available and prints the name of the GPU if it is available.
 experiment.py #This script is used to run the machine learning experiments. It contains all the functions need for data loading training, prediction and testing.
