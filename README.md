@@ -53,14 +53,19 @@ The workflow for this project is as follows:
      - Deformation characteristics (maximum, min, etc.)
      - Onshore inundation characteristics (maximum depth, area, etc.)
 
+<img src="/resources/plots/samplingflowchart.png" alt="Sampling Approach" height="400">
+
 2. Splitting the Event Selection
    - The selected events are divided into training and testing sets(75:25). In our ensemble learning mode, a cross validation approach is adopted with  4 folds providing a shuffle across these training and test subsets. 
+
+<img src="/resources/plots/StochasticEmulation.png" alt="Stochastic Emulation" height="400">
 
 3.    Training the ML Model(Stochastic version of the encoder - decoder neural network) and prediction
    - The ML model is trained on the training set, with guidance based on the test set for hyperparameter tuning.
    - Here 4 encoder-decoder models are trained on each fold subsets of the training data.
    - For the stochastic version each of the four fold model is used to generate 100 realisations for each event from the test set.
    - The final prediction are presented with the mean and uncertainty bounds (+-2sigma) calculated from the 400 sample values.
+
 
 4. Model Performance Evaluation
    - The performance of the model is assessed using the unused dataset:
