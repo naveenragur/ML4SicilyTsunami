@@ -11,7 +11,7 @@ The ML model is trained using simulation data provided by INGV and NGI for Easte
 (Click the "Download Raw" button at the link to download the file, its html files created with folium)
 - [Events Map Explorer](/resources/gis/html/map_events.html)
 
-The dataset is archived at main Zenodo link: [https://doi.org/10.5281/zenodo.13738078](https://doi.org/10.5281/zenodo.13738078) with three parts as below.
+The dataset is archived at main Zenodo link: [https://doi.org/10.5281/zenodo.13738078](https://doi.org/10.5281/zenodo.13738078) with parts as below.
 - https://doi.org/10.5281/zenodo.13738078 (Part1) - Training Dataset and Model Checkpoints
 - https://doi.org/10.5281/zenodo.13741284 (Part2) - Testing Dataset
 
