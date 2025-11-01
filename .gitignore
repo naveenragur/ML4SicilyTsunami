@@ -1,6 +1,7 @@
 .neptune
 **/sacred_logs/
 **/sbatch_logs/
+**/configs/
 
 *.tar
 *tar.gz
