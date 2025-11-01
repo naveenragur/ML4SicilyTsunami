@@ -79,7 +79,7 @@ The workflow for this project is as follows:
    - The results are compared with HPC based results for a full ptha eventset, subset considering events that cause local deformation and events that dont cause any local deformation.
    - These results are used to benchmark the emulation hazard with different training sizes against HPC and Stratified Importance Sampling based results.
 
-<img src="/resources/plots/PTHAHazardMap_ComparisonCT.png" alt="PTHA Inundation Maps(HPC vs ML)" height="800">
+<img src="/resources/plots/HazMaps.png" alt="PTHA Inundation Maps(HPC vs ML)" height="800">
 
 ## Useful References and Projects
 - Ragu Ramalingam 2025 - [Advancing nearshore and onshore tsunami hazard approximation with machine learning surrogates](https://doi.org/10.5194/nhess-25-1655-2025)
