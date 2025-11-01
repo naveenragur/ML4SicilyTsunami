@@ -1,8 +1,0 @@
--1    grey     0      grey
-0     yellow   10     yellow
-10    orange   30     orange
-30    red      100    red
-100   purple   10000   purple
-B     grey
-F     white
-N     128 128 128
