@@ -91,7 +91,10 @@ export CUDA_VISIBLE_DEVICES=1 # to present the GPU for this job
 conda deactivate
 conda activate rioxarray_env
 # python 06_compare_depths.py CT compare_pygmt 1658 892 0
+python 06_compare_depths_optimized.py CT compare 892 892 0
 python 06_compare_depths_optimized.py CT compare 1658 892 0
+python 06_compare_depths_optimized.py CT compare 3454 892 0
+python 06_compare_depths_optimized.py CT compare 7071 892 0
 
 #Grid calculation and other checks only use model with 1658 events mean prediction
 # echo "Performance calculation for all grids"

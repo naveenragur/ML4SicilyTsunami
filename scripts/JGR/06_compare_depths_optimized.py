@@ -64,14 +64,14 @@ def cleanup_variables(*vars_to_delete):
 # plotting the below events
 ids = [
     'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S112D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
-    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
-    'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
-    'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
-    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
-    'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
+    # 'BS_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D144_S022D70R270_A006995_S075',
+    # 'BS_manning003/E01267N3753E01646N3535-BS-M809_E01547N3670_D010_S337D70R270_A006995_S075',
+    # 'BS_manning003/E01267N3753E01646N3535-BS-M809_E01495N3692_D010_S022D50R270_A006995_S075',
+    # 'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01502N3737_D010_S067D90R090_A006995_S075',
+    # 'BS_manning003/E01267N3753E01646N3535-BS-M809_E01523N3692_D010_S292D50R270_A006995_S075',
+    # 'BS_4-8_manning003/E01267N3753E01646N3535-BS-M809_E01551N3692_D010_S112D90R090_A006995_S075',
+    # 'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M895_E02351N3465_S003',
+    # 'PS_manning003/E02020N3739E02658N3366-PS-Str_PYes_Var-M902_E02417N3454_S001',
     ]
 
 #dimensions and gauge numbers
@@ -151,7 +151,8 @@ if mode == 'compare':
     print(f"Starting to process {total_events} events from index {start}")
     print_memory_usage(0)
     
-    for id in events_to_process:
+    # for id in events_to_process:
+    for id in ids:
         eve = np.where(eve_id==id)[0][0]
         processed_events += 1
         
@@ -219,7 +220,7 @@ if mode == 'compare':
             # Local Deformation
             DZ = axs[0].scatter(x_list,y_list, c=dz_smooth, s=0.0005, cmap=cmap_dz,
                                 vmin=-5, vmax=5,alpha=1)
-            axs[0].text(xpos,ypos, f'max: {np.nanmax(dz_smooth):.3f},\\nmin: {np.nanmin(dz_smooth):.3f}',
+            axs[0].text(xpos,ypos, f'max: {np.nanmax(dz_smooth):.3f},\nmin: {np.nanmin(dz_smooth):.3f}',
                         horizontalalignment='center', verticalalignment='center',transform=axs[0].transAxes, fontsize=12)
             axs[0].set_title('Local Deformation')
 
@@ -233,14 +234,14 @@ if mode == 'compare':
             # Pred_mean
             PR_pretrain = axs[2].scatter(idx[:, 1], idx[:, 0], c=pred_mean, s=0.0005, cmap=cmap_depth,
                                 vmin=0, vmax=10,alpha=1)
-            axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_mean):.3f}\\nr^2: {eve_perf_mean["r2"].iloc[eve]:.3f}\\ng: {eve_perf_mean["g"].iloc[eve]:.3f}',
+            axs[2].text(xpos,ypos, f'max: {np.nanmax(pred_mean):.3f}\nr^2: {eve_perf_mean["r2"].iloc[eve]:.3f}\ng: {eve_perf_mean["g"].iloc[eve]:.3f}',
                         horizontalalignment='center', verticalalignment='center',transform=axs[2].transAxes, fontsize=12)
             axs[2].set_title('Mean')
 
             # Error
             ER_pretrain = axs[3].scatter(idx[:, 1], idx[:, 0], c=error_mean, s=0.0005, cmap=cmap_error,
                                 vmin=-5,vmax=5,alpha=1)
-            axs[3].text(xpos,ypos, f'max: {np.nanmax(error_mean):.3f},\\nmin: {np.nanmin(error_mean):.3f}',
+            axs[3].text(xpos,ypos, f'max: {np.nanmax(error_mean):.3f},\nmin: {np.nanmin(error_mean):.3f}',
                         horizontalalignment='center', verticalalignment='center',transform=axs[3].transAxes, fontsize=12)
             axs[3].set_title('Error Mean')
 
@@ -254,7 +255,7 @@ if mode == 'compare':
             # Error
             ER_direct = axs[5].scatter(idx[:, 1], idx[:, 0], c=error_sigmaminus, s=0.0005, cmap=cmap_error,
                                 vmin=-5,vmax=5,alpha=1)
-            axs[5].text(xpos,ypos, f'max: {np.nanmax(error_sigmaminus):.3f},\\nmin: {np.nanmin(error_sigmaminus):.3f}',
+            axs[5].text(xpos,ypos, f'max: {np.nanmax(error_sigmaminus):.3f},\nmin: {np.nanmin(error_sigmaminus):.3f}',
                         horizontalalignment='center', verticalalignment='center',transform=axs[5].transAxes, fontsize=12)
             axs[5].set_title('Error Mean-2Sigma')
 
@@ -268,7 +269,7 @@ if mode == 'compare':
             #Error
             ER_pretrain = axs[7].scatter(idx[:, 1], idx[:, 0], c=error_sigmaplus, s=0.0005, cmap=cmap_error,
                                 vmin=-5,vmax=5,alpha=1)
-            axs[7].text(xpos,ypos, f'max: {np.nanmax(error_sigmaplus):.3f},\\nmin: {np.nanmin(error_sigmaplus):.3f}',
+            axs[7].text(xpos,ypos, f'max: {np.nanmax(error_sigmaplus):.3f},\nmin: {np.nanmin(error_sigmaplus):.3f}',
                         horizontalalignment='center', verticalalignment='center',transform=axs[7].transAxes, fontsize=12)
             axs[7].set_title('Error Mean+2Sigma')
 
@@ -299,7 +300,7 @@ if mode == 'compare':
             plt.tight_layout()
             
             # Save with lower DPI for large datasets to save space and time
-            dpi_value = 50 if total_events > 1000 else 150
+            dpi_value = 100 if total_events > 1000 else 150
             plt.savefig(output_file, dpi=dpi_value, bbox_inches='tight', pad_inches=0.1)
             
             #close figure and clear memory
@@ -340,12 +341,12 @@ if mode == 'compare':
             continue
     
     # Final summary
-    print(f"\\nProcessing complete!")
+    print(f"\nProcessing complete!")
     print(f"Successfully processed: {processed_events - len(failed_events)}/{total_events}")
     print(f"Failed events: {len(failed_events)}")
     
     if failed_events:
-        print("\\nFailed events:")
+        print("\nFailed events:")
         for event_id, error_msg in failed_events:
             print(f"  {event_id}: {error_msg}")
         
@@ -360,7 +361,7 @@ elif mode == 'compare_pygmt':
     for id in ids:
         try:
             eve = np.where(eve_id==id)[0][0]
-            print(id,'\\n',eve)
+            print(id,'\n',eve)
             #cm to m
             pred_mean=pred_depths_mean[eve]/100
             pred_sigmaminus=pred_depths_sigmaminus[eve]/100
