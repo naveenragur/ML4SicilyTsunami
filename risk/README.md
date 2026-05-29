@@ -38,12 +38,46 @@ The repository is organized as follows:
 - `plots/`: Jupyter notebooks for analysis and visualization of the results.
 
 
-## Command to run the OQ risk calculation
+## Command to run the OQ risk calculation/ cheat sheet
 
-```sh
-conda activate oq
-oq engine --run job_hdf5_simulation.ini
+## General / System
+```bash
+oq --version       # check version
+oq info cfg        # show configuration
+oq engine --help   # show help
 ```
+
+## Running Calculations
+```bash
+oq run job.ini                                   # launch job
+oq engine --run job_hdf5_simulation.ini
+oq engine --run job_csv.ini 
+OQ_DISTRIBUTE=processpool oq engine --run job_hdf5.ini 
+```
+
+## Managing Calculations
+```bash
+oq engine --lrc                              # check runs
+oq engine --show-log 83                      # show log for a calculation
+oq abort 12                                  # abort a single calculation
+oq abort 46 47 54 72                         # abort multiple calculations
+oq db reset_is_running                       # reset running state
+oq engine --delete-uncompleted-calculations  # delete uncompleted calculations
+oq engine -dc 12                             # delete a specific calculation
+```
+
+## Working with Outputs
+```bash
+oq engine --lo 12                                            # list outputs (shorthand)
+oq engine --list-outputs 74                                  # list outputs
+oq engine --export-output <output_id> <output_directory>     # export a specific output
+oq engine --eos 12 /mnt/data/nragu/Risk/results              # export all outputs for a calculation
+```
+
+## References
+- [OpenQuake Users Google Group](https://groups.google.com/g/openquake-users/c/MBv5N1oq1CQ?pli=1)
+- [OpenQuake Outputs Documentation](https://docs.openquake.org/oq-engine/manual/latest/user-guide/outputs/index.html)
+
 
 ## Requirements
 

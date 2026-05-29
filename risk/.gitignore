@@ -1,5 +1,17 @@
 exposure/GEM/*.csv
 
+__pycache__/
+*.pyc
+
+*.hdf5
+*.npy
+*.out
+*.err
+
+test/*.zip
+test/*.hdf5
+test/*.csv
+
 hazard/*.csv
 hazard/*.npy
 hazard/log
@@ -11,7 +23,10 @@ loss/*.out
 plots/configs
 
 results/*.csv
+results/oq_exports/*.csv
 results/log
 results/configs
 results/risk_calc/*
 temp/*
+tmp_const/*
+tmp_foglio/*
