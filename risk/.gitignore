@@ -8,6 +8,13 @@ __pycache__/
 *.out
 *.err
 
+jobs/job_hdf5_225*
+jobs/job_hdf5_529*
+jobs/job_hdf5_892*
+jobs/job_hdf5_1658*
+jobs/job_hdf5_3454*
+jobs/job_hdf5_7071*
+
 test/*.zip
 test/*.hdf5
 test/*.csv
@@ -29,6 +36,7 @@ results/oq_exports/*.csv
 results/log
 results/configs
 results/risk_calc/*
-temp/*
+
+tmp/*
 tmp_const/*
 tmp_foglio/*
